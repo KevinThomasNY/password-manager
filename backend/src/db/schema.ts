@@ -23,4 +23,7 @@ export const passwords = sqliteTable("passwords", {
   createdAt: text("created_at")
     .notNull()
     .default(sql`(current_timestamp)`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
 });

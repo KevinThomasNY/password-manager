@@ -2,13 +2,14 @@
   "name": "backend",
   "version": "1.0.0",
   "scripts": {
-    "start": "ts-node src/db/index.ts",
+    "start": "ts-node src/db/db-connection.ts",
     "dev": "nodemon src/server.ts",
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
     "drizzle-orm": "^0.33.0",
     "express": "^4.21.0"
   },
