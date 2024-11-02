@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError, ZodSchema } from "zod";
 import { StatusCodes } from "../utils/status-codes";
-
+import logger from "../utils/logger";
 class AppError extends Error {
   public statusCode: number;
 
@@ -65,7 +65,7 @@ function errorMiddleware(
       message: err.message,
     });
   } else {
-    console.error("Unhandled Error:", err);
+    logger.error(`Unhandled Error: ${err.message}`, { stack: err.stack });
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: "error",
       message: "Internal Server Error",

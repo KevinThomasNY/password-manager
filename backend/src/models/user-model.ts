@@ -4,14 +4,17 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { AppError, ValidationError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
+import logger from "../utils/logger";
+
 export async function addNewUser(
   userName: string,
   password: string,
   firstName: string,
   lastName: string
 ) {
-  console.log("Adding new user:", userName, firstName, lastName);
-  console.log(users);
+  logger.debug(
+    `Adding new user: userName=${userName}, firstName=${firstName}, lastName=${lastName}`
+  );
   try {
     const existingUser = await db
       .select()
@@ -38,7 +41,7 @@ export async function addNewUser(
 
     return user;
   } catch (error) {
-    console.error(`Error adding user: ${error}`);
+    logger.error(`Error adding user: ${error}`);
     throw new AppError("Error adding user", StatusCodes.INTERNAL_SERVER_ERROR);
   }
 }
