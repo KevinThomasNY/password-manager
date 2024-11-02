@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
-  id: integer("id").primaryKey(),
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   userName: text("username", { length: 50 }).notNull().unique(),
   password: text("password", { length: 256 }).notNull(),
   firstName: text("first_name", { length: 50 }).notNull(),
@@ -13,7 +13,7 @@ export const users = sqliteTable("users", {
 });
 
 export const passwords = sqliteTable("passwords", {
-  id: integer("id").primaryKey(),
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
   name: text("name", { length: 100 }).notNull(),
   password: text("password", { length: 256 }).notNull(),
   image: text("image", { length: 256 }),

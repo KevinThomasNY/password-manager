@@ -6,6 +6,12 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "baseUrl": "./", // Set baseUrl to the root of your project
+    "paths": {
+      "*": ["src/*"] // Adjust based on your project structure
+    },
+    "types": ["node"]
+  },
+  "include": ["src/**/*"] // Ensure all relevant files are included
 }
