@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { AppError, ValidationError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
+import { currentTimeStamp } from "../utils/helpers";
 
 export async function addNewUser(
   userName: string,
@@ -57,6 +58,7 @@ export async function updateUser(
     `Updating user: userId=${userId}, userName=${userName}, firstName=${firstName}, lastName=${lastName}`
   );
   try {
+    const time = currentTimeStamp();
     const numUserId = parseInt(userId);
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -67,12 +69,13 @@ export async function updateUser(
         password: hashedPassword,
         firstName,
         lastName,
+        updatedAt: time,
       })
       .where(eq(users.id, numUserId))
       .returning({
         userName: users.userName,
       });
-    if(!user){
+    if (!user) {
       throw new ValidationError("User not found");
     }
     return user;
