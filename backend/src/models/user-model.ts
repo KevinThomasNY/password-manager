@@ -45,3 +45,42 @@ export async function addNewUser(
     throw new AppError("Error adding user", StatusCodes.INTERNAL_SERVER_ERROR);
   }
 }
+
+export async function updateUser(
+  userId: string,
+  userName: string,
+  password: string,
+  firstName: string,
+  lastName: string
+) {
+  logger.debug(
+    `Updating user: userId=${userId}, userName=${userName}, firstName=${firstName}, lastName=${lastName}`
+  );
+  try {
+    const numUserId = parseInt(userId);
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const [user] = await db
+      .update(users)
+      .set({
+        userName,
+        password: hashedPassword,
+        firstName,
+        lastName,
+      })
+      .where(eq(users.id, numUserId))
+      .returning({
+        userName: users.userName,
+      });
+    if(!user){
+      throw new ValidationError("User not found");
+    }
+    return user;
+  } catch (error) {
+    logger.error(`Error updating user: ${error}`);
+    throw new AppError(
+      "Error updating user",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}

@@ -31,3 +31,32 @@ export const createUser = async (
     next(error);
   }
 };
+
+export const editUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { userName, password, firstName, lastName } = req.body;
+    logger.debug(
+      `editUser: userId=${req.params.id}, userName=${userName}, firstName=${firstName}, lastName=${lastName}`
+    );
+    const user = await userModel.updateUser(
+      req.params.id,
+      userName,
+      password,
+      firstName,
+      lastName
+    );
+    logger.info(`User updated successfully: ${JSON.stringify(user)}`);
+    successResponse({
+      res,
+      message: "User updated Successfully",
+      data: user,
+      statusCode: StatusCodes.OK,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
