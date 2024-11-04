@@ -87,3 +87,59 @@ export async function updateUser(
     );
   }
 }
+
+export async function fetchUserByEmail(userName: string) {
+  logger.debug(`Fetching user by email: userName=${userName}`);
+  try {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.userName, userName));
+    if (!user) {
+      throw new ValidationError("User not found");
+    }
+    return user;
+  } catch (error) {
+    logger.error(`Error fetching user: ${error}`);
+    throw new AppError(
+      "Error fetching user",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+export async function comparePassword(
+  plainPassword: string,
+  hashedPassword: string
+) {
+  logger.debug(`Comparing password`);
+  try {
+    const match = await bcrypt.compare(plainPassword, hashedPassword);
+    if (!match) {
+      throw new ValidationError("Invalid password");
+    }
+  } catch (error) {
+    logger.error(`Error comparing password: ${error}`);
+    throw new AppError(
+      "Error comparing password",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+export async function fetchUserById(userId: number) {
+  logger.debug(`Fetching user by id: userId=${userId}`);
+  try {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user) {
+      throw new ValidationError("User not found");
+    }
+    return user;
+  } catch (error) {
+    logger.error(`Error fetching user: ${error}`);
+    throw new AppError(
+      "Error fetching user",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}

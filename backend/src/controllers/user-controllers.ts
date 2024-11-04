@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import * as userModel from "../models/user-model";
+import jwt from "jsonwebtoken";
 import { successResponse } from "../utils/response";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
@@ -54,6 +55,40 @@ export const editUser = async (
       res,
       message: "User updated Successfully",
       data: user,
+      statusCode: StatusCodes.OK,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const loginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { userName, password } = req.body;
+    logger.debug(`loginUser: userName=${userName}`);
+    const user = await userModel.fetchUserByEmail(userName);
+    await userModel.comparePassword(password, user.password);
+    const token = jwt.sign(
+      { id: user.id, username: user.userName },
+      process.env.SECRET_KEY!,
+      {
+        expiresIn: "1h",
+      }
+    );
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 3600000,
+    });
+    successResponse({
+      res,
+      message: "User logged in Successfully",
+      data: user.userName,
       statusCode: StatusCodes.OK,
     });
   } catch (error) {

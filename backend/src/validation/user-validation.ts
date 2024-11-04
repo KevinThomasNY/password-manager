@@ -20,3 +20,8 @@ export const createUserSchema = z.object({
 });
 
 export const editUserSchema = createUserSchema;
+
+export const login = createUserSchema.omit({
+  firstName: true,
+  lastName: true,
+});
