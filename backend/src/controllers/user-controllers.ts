@@ -95,3 +95,17 @@ export const loginUser = async (
     next(error);
   }
 };
+
+export const logoutUser = async (req: Request, res: Response) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 0,
+  });
+  successResponse({
+    res,
+    message: "User logged out Successfully",
+    statusCode: StatusCodes.OK,
+  });
+};
