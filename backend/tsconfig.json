@@ -7,11 +7,12 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": "./", // Set baseUrl to the root of your project
+    "baseUrl": "./",
     "paths": {
-      "*": ["src/*"] // Adjust based on your project structure
+      "*": ["src/*"]
     },
     "types": ["node"]
   },
-  "include": ["src/**/*"] // Ensure all relevant files are included
+  "include": ["src/**/*"],
+  "files": ["src/types/express.d.ts"]
 }

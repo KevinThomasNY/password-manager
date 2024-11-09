@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import * as userModel from "../models/user-model";
 import jwt from "jsonwebtoken";
 import { successResponse } from "../utils/response";
+import { UnauthorizedError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
 
@@ -39,12 +40,17 @@ export const editUser = async (
   next: NextFunction
 ) => {
   try {
+    const { id } = req.params;
     const { userName, password, firstName, lastName } = req.body;
+    if (parseInt(id, 10) !== req.user?.id) {
+      logger.error("Unauthorized access to edit user");
+      return next(new UnauthorizedError());
+    }
     logger.debug(
-      `editUser: userId=${req.params.id}, userName=${userName}, firstName=${firstName}, lastName=${lastName}`
+      `editUser: userId=${id}, userName=${userName}, firstName=${firstName}, lastName=${lastName}`
     );
     const user = await userModel.updateUser(
-      req.params.id,
+      id,
       userName,
       password,
       firstName,

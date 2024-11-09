@@ -4,18 +4,7 @@ import { AppError } from "./error-middleware";
 import * as userModel from "../models/user-model";
 import { StatusCodes } from "../utils/status-codes";
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: number;
-    username: string;
-  };
-}
-
-const protect = async (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-) => {
+const protect = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.cookies.token;
 
