@@ -11,8 +11,8 @@ export const users = sqliteTable("users", {
     .notNull()
     .default(sql`(current_timestamp)`),
   updatedAt: text("last_updated")
-  .notNull()
-  .default(sql`(current_timestamp)`),
+    .notNull()
+    .default(sql`(current_timestamp)`),
 });
 
 export const passwords = sqliteTable("passwords", {
@@ -23,6 +23,21 @@ export const passwords = sqliteTable("passwords", {
   userId: integer("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+});
+
+export const securityQuestions = sqliteTable("security_questions", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  passwordId: integer("password_id")
+    .notNull()
+    .references(() => passwords.id, { onDelete: "cascade" }),
+  question: text("question", { length: 256 }).notNull(),
+  answer: text("answer", { length: 256 }).notNull(),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(current_timestamp)`),
