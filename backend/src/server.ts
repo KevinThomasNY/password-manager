@@ -4,6 +4,7 @@ dotenv.config();
 import cookieParser from 'cookie-parser';
 import { errorMiddleware } from "./middleware/error-middleware";
 import userRoutes from "./routes/user-routes";
+import passwordRoutes from "./routes/password-routes";
 import logger from "./utils/logger";
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/users", userRoutes);
+app.use("/api/passwords", passwordRoutes);
 
 app.use(errorMiddleware);
 
