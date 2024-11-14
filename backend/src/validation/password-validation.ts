@@ -13,7 +13,10 @@ const passwordSchema = z
       .string()
       .max(256, "Image must be at most 256 characters")
       .optional(),
-    questions: z.array(questionAnswerSchema).optional(),
+    questions: z
+      .array(questionAnswerSchema)
+      .max(15, "You can add up to 15 questions only")
+      .optional(),
   })
   .refine(
     (data) => {
