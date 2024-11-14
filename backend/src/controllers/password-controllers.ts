@@ -17,9 +17,23 @@ export const createPassword = async (
   );
 
   try {
+    const hasQuestions = questions && questions.length > 0;
+    if (hasQuestions) {
+      const questionTexts = questions.map(
+        (q: { question: string }) => q.question
+      );
+      const uniqueQuestions = new Set(questionTexts);
+
+      if (uniqueQuestions.size !== questionTexts.length) {
+        throw new ValidationError("Each security question must be unique.");
+      }
+    }
     const user_id = req.user?.id!;
-    const passwordExists = await passwordModel.checkExistingPassword(name, user_id);
-    if(passwordExists) {
+    const passwordExists = await passwordModel.checkExistingPassword(
+      name,
+      user_id
+    );
+    if (passwordExists) {
       throw new ValidationError("Password with this name already exists");
     }
     const encryptedPassword = encrypt(password);
@@ -32,7 +46,7 @@ export const createPassword = async (
     logger.info(
       `Password created successfully: ${JSON.stringify(newPassword)}`
     );
-    if (questions && questions.length > 0) {
+    if (hasQuestions) {
       const encryptedQuestions = questions.map(
         (q: { question: string; answer: string }) => ({
           question: q.question,
