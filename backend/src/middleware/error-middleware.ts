@@ -60,6 +60,7 @@ function errorMiddleware(
   next: NextFunction
 ) {
   if (err instanceof AppError) {
+    logger.error(`AppError: ${err.message}`, { statusCode: err.statusCode });
     res.status(err.statusCode).json({
       status: "error",
       message: err.message,
