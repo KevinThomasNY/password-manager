@@ -3,7 +3,33 @@ import { passwords, securityQuestions } from "../db/schema";
 import { AppError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
+import { eq, and, sql } from "drizzle-orm";
 import { currentTimeStamp } from "../utils/helpers";
+
+export async function checkExistingPassword(name: string, user_id: number) {
+  logger.debug(`Checking if password exists: name=${name}`);
+  try {
+    const password = await db
+      .select({ id: passwords.id })
+      .from(passwords)
+      .where(
+        and(
+          eq(sql`LOWER(${passwords.name})`, name.toLowerCase()),
+          eq(passwords.userId, user_id)
+        )
+      );
+
+    logger.debug(`Password: ${JSON.stringify(password, null, 2)}`);
+
+    return password.length > 0;
+  } catch (error) {
+    logger.error(`Error checking if password exists: ${error}`);
+    throw new AppError(
+      "Error checking if password exists",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
 
 export async function addPassword(
   name: string,
