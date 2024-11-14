@@ -3,8 +3,7 @@ import logger from "../utils/logger";
 import { encrypt } from "../utils/crypto";
 import * as passwordModel from "../models/password-model";
 import { successResponse } from "../utils/response";
-import { StatusCodes } from "../utils/status-codes";
-import { AppError } from "../middleware/error-middleware";
+import { ValidationError } from "../middleware/error-middleware";
 
 export const createPassword = async (
   req: Request,
@@ -21,7 +20,7 @@ export const createPassword = async (
     const user_id = req.user?.id!;
     const passwordExists = await passwordModel.checkExistingPassword(name, user_id);
     if(passwordExists) {
-      return next(new AppError("Password already exists", StatusCodes.CONFLICT));
+      throw new ValidationError("Password with this name already exists");
     }
     const encryptedPassword = encrypt(password);
     const newPassword = await passwordModel.addPassword(
