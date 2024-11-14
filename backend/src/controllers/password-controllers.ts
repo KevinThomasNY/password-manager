@@ -17,6 +17,12 @@ export const createPassword = async (
   );
 
   try {
+    const totalPasswords = await passwordModel.getPasswordCount(req.user?.id!);
+    if (totalPasswords >= 300) {
+      throw new ValidationError(
+        "You have reached the maximum number of passwords allowed."
+      );
+    }
     const hasQuestions = questions && questions.length > 0;
     if (hasQuestions) {
       const questionTexts = questions.map(

@@ -3,8 +3,27 @@ import { passwords, securityQuestions } from "../db/schema";
 import { AppError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, count } from "drizzle-orm";
 import { currentTimeStamp } from "../utils/helpers";
+
+export async function getPasswordCount(user_id: number) {
+  logger.debug(`Getting password count for user ID: ${user_id}`);
+  try {
+    const totalPasswords = await db
+      .select({count: count()})
+      .from(passwords)
+      .where(eq(passwords.userId, user_id));
+      
+    logger.debug(`Count: ${totalPasswords[0].count}`);
+    return totalPasswords[0].count;
+  } catch (error) {
+    logger.error(`Error getting password count: ${error}`);
+    throw new AppError(
+      "Error getting password count",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
 
 export async function checkExistingPassword(name: string, user_id: number) {
   logger.debug(`Checking if password exists: name=${name}`);
