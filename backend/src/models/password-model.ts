@@ -106,7 +106,7 @@ export async function addSecurityQuestions(
     );
   }
 }
-export async function getPasswordById( passwordId: number, userId: number) {
+export async function getPasswordById(passwordId: number, userId: number) {
   logger.debug(`Fetching password by ID: ${passwordId} for user ID: ${userId}`);
   try {
     const password = await db
@@ -182,6 +182,19 @@ export async function deleteSecurityQuestions(passwordId: number) {
     logger.error(`Error deleting security questions: ${error}`);
     throw new AppError(
       "Error deleting security questions",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+export async function deletePasswordById(passwordId: number) {
+  logger.debug(`Deleting password ID: ${passwordId}`);
+  try {
+    await db.delete(passwords).where(eq(passwords.id, passwordId));
+  } catch (error) {
+    logger.error(`Error deleting password: ${error}`);
+    throw new AppError(
+      "Error deleting password",
       StatusCodes.INTERNAL_SERVER_ERROR
     );
   }

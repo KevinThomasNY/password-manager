@@ -159,3 +159,37 @@ export const editPassword = async (
     next(error);
   }
 };
+
+export const deletePassword = async (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  try {
+    const passwordId = parseInt(request.params.id, 10);
+    const password = await passwordModel.getPasswordById(
+      passwordId,
+      request.user?.id!
+    );
+
+    if (!password) {
+      throw new ValidationError("Password not found.");
+    }
+
+    const userId = password.userId;
+    if (userId !== request.user?.id) {
+      throw new UnauthorizedError(
+        "You are not authorized to delete this password"
+      );
+    }
+
+    const data = await passwordModel.deletePasswordById(passwordId);
+    successResponse({
+      res: response,
+      message: "Password deleted successfully",
+      data: data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
