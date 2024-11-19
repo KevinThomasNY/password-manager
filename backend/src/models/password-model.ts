@@ -10,10 +10,10 @@ export async function getPasswordCount(user_id: number) {
   logger.debug(`Getting password count for user ID: ${user_id}`);
   try {
     const totalPasswords = await db
-      .select({count: count()})
+      .select({ count: count() })
       .from(passwords)
       .where(eq(passwords.userId, user_id));
-      
+
     logger.debug(`Count: ${totalPasswords[0].count}`);
     return totalPasswords[0].count;
   } catch (error) {
@@ -102,6 +102,86 @@ export async function addSecurityQuestions(
     logger.error(`Error adding security questions: ${error}`);
     throw new AppError(
       "Error adding security questions",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+export async function getPasswordById( passwordId: number, userId: number) {
+  logger.debug(`Fetching password by ID: ${passwordId} for user ID: ${userId}`);
+  try {
+    const password = await db
+      .select()
+      .from(passwords)
+      .where(and(eq(passwords.id, passwordId), eq(passwords.userId, userId)))
+      .limit(1);
+
+    if (password.length === 0) {
+      return null;
+    }
+
+    return password[0];
+  } catch (error) {
+    logger.error(`Error fetching password by ID: ${error}`);
+    throw new AppError(
+      "Error fetching password",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+export async function updatePassword(
+  passwordId: number,
+  updates: {
+    name?: string;
+    password?: string;
+    image?: string;
+  }
+) {
+  logger.debug(
+    `Updating password ID: ${passwordId} with updates: ${JSON.stringify(
+      updates
+    )}`
+  );
+  try {
+    const updatedRows = await db
+      .update(passwords)
+      .set({
+        ...updates,
+        updatedAt: currentTimeStamp(),
+      })
+      .where(eq(passwords.id, passwordId))
+      .returning({
+        id: passwords.id,
+        name: passwords.name,
+        image: passwords.image,
+        updatedAt: passwords.updatedAt,
+      });
+
+    if (updatedRows.length === 0) {
+      throw new AppError("Password not found", StatusCodes.NOT_FOUND);
+    }
+
+    return updatedRows[0];
+  } catch (error) {
+    logger.error(`Error updating password: ${error}`);
+    throw new AppError(
+      "Error updating password",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+export async function deleteSecurityQuestions(passwordId: number) {
+  logger.debug(`Deleting security questions for password ID: ${passwordId}`);
+  try {
+    await db
+      .delete(securityQuestions)
+      .where(eq(securityQuestions.passwordId, passwordId));
+    logger.info(`Security questions deleted for password ID: ${passwordId}`);
+  } catch (error) {
+    logger.error(`Error deleting security questions: ${error}`);
+    throw new AppError(
+      "Error deleting security questions",
       StatusCodes.INTERNAL_SERVER_ERROR
     );
   }
