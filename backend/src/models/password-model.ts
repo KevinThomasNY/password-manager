@@ -187,6 +187,66 @@ export async function deleteSecurityQuestions(passwordId: number) {
   }
 }
 
+export function generatePasswordModel(
+  length: number,
+  includesUppercase: boolean,
+  includesLowercase: boolean,
+  includesNumbers: boolean,
+  includesSymbols: boolean
+) {
+  logger.debug(`Generating password with length: ${length}`);
+
+  const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+  const numberChars = "0123456789";
+  const symbolChars = "!@#$%^&*()_+-=[]{}|;:,.<>/?";
+
+  let characterPool = "";
+  let requiredChars: string[] = [];
+
+  if (includesUppercase) {
+    characterPool += uppercaseChars;
+    requiredChars.push(
+      uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)]
+    );
+  }
+  if (includesLowercase) {
+    characterPool += lowercaseChars;
+    requiredChars.push(
+      lowercaseChars[Math.floor(Math.random() * lowercaseChars.length)]
+    );
+  }
+  if (includesNumbers) {
+    characterPool += numberChars;
+    requiredChars.push(
+      numberChars[Math.floor(Math.random() * numberChars.length)]
+    );
+  }
+  if (includesSymbols) {
+    characterPool += symbolChars;
+    requiredChars.push(
+      symbolChars[Math.floor(Math.random() * symbolChars.length)]
+    );
+  }
+
+  if (characterPool.length === 0) {
+    throw new Error("At least one character type must be selected.");
+  }
+
+  let passwordChars: string[] = [];
+
+  passwordChars = passwordChars.concat(requiredChars);
+
+  for (let i = requiredChars.length; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characterPool.length);
+    passwordChars.push(characterPool[randomIndex]);
+  }
+
+  passwordChars = passwordChars.sort(() => Math.random() - 0.5);
+
+  return passwordChars.join("");
+}
+
 export async function deletePasswordById(passwordId: number) {
   logger.debug(`Deleting password ID: ${passwordId}`);
   try {

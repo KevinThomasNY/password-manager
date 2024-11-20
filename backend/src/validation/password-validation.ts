@@ -5,7 +5,7 @@ const questionAnswerSchema = z.object({
   answer: z.string().max(256, "Answer must be at most 256 characters"),
 });
 
-const passwordSchema = z
+export const createPasswordSchema = z
   .object({
     name: z.string().max(100, "Name must be at most 100 characters"),
     password: z.string().max(256, "Password must be at most 256 characters"),
@@ -30,4 +30,10 @@ const passwordSchema = z
     }
   );
 
-export default passwordSchema;
+export const generatePasswordSchema = z.object({
+  length: z.number().int().min(1, "Length must be at least 1"),
+  includeUppercase: z.boolean(),
+  includeLowercase: z.boolean(),
+  includeNumbers: z.boolean(),
+  includeSymbols: z.boolean(),
+})

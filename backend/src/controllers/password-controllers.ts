@@ -160,6 +160,44 @@ export const editPassword = async (
   }
 };
 
+export const generatePassword = async (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  try {
+    const {
+      length,
+      includeUppercase,
+      includeLowercase,
+      includeNumbers,
+      includeSymbols,
+    } = request.body;
+
+    logger.debug(
+      `generatePassword: length=${length}, includeUppercase=${includeUppercase}, includeLowercase=${includeLowercase}, includeNumbers=${includeNumbers}, includeSymbols=${includeSymbols}`
+    );
+
+    const password = passwordModel.generatePasswordModel(
+      length,
+      includeUppercase,
+      includeLowercase,
+      includeNumbers,
+      includeSymbols
+    );
+
+    logger.debug(password)
+
+    successResponse({
+      res: response,
+      message: "Password generated successfully",
+      data: password,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deletePassword = async (
   request: Request,
   response: Response,
