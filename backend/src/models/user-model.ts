@@ -1,5 +1,5 @@
 import { db } from "../db/db-connection";
-import { users } from "../db/schema";
+import { users, userLoginHistory } from "../db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { AppError, ValidationError } from "../middleware/error-middleware";
@@ -139,6 +139,21 @@ export async function fetchUserById(userId: number) {
     logger.error(`Error fetching user: ${error}`);
     throw new AppError(
       "Error fetching user",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+export async function insertLoginHistory(userId: number, ipAddress: string) {
+  try {
+    logger.debug(
+      `Inserting login history: userId=${userId}, ipAddress=${ipAddress}`
+    );
+    await db.insert(userLoginHistory).values({ userId, ipAddress });
+  } catch (error) {
+    logger.error(`Error inserting login history: ${error}`);
+    throw new AppError(
+      "Error inserting login history",
       StatusCodes.INTERNAL_SERVER_ERROR
     );
   }

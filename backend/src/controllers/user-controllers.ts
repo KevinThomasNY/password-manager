@@ -91,6 +91,11 @@ export const loginUser = async (
       sameSite: "strict",
       maxAge: 3600000,
     });
+    const ipAddress =
+      (req.headers["x-forwarded-for"]?.toString().split(",")[0] || req.ip) ??
+      "unknown";
+
+    await userModel.insertLoginHistory(user.id, ipAddress);
     successResponse({
       res,
       message: "User logged in Successfully",

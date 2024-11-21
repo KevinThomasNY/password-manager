@@ -45,3 +45,14 @@ export const securityQuestions = sqliteTable("security_questions", {
     .notNull()
     .default(sql`(current_timestamp)`),
 });
+
+export const userLoginHistory = sqliteTable("user_login_history", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  loginTime: text("login_time")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+  ipAddress: text("ip_address").notNull(),
+});
