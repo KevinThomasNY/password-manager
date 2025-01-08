@@ -1,10 +1,11 @@
-function Login() {
+import LoginForm from "@/components/LoginForm";
 
+const Login = () => {
   return (
-    <>
-      <h1>Login</h1>
-    </>
-  )
-}
+    <div className="flex min-h-screen items-center justify-cente">
+      <LoginForm />
+    </div>
+  );
+};
 
-export default Login
+export default Login;
