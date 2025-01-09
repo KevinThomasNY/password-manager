@@ -120,3 +120,21 @@ export const logoutUser = async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
   });
 };
+
+export const checkAuth = async (req: Request, res: Response) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      status: "error",
+      message: "Unauthorized",
+      data: null,
+    });
+  }
+
+  successResponse({
+    res,
+    message: "User is authenticated",
+    statusCode: StatusCodes.OK,
+  });
+};

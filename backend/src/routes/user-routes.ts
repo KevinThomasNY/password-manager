@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  checkAuth,
   createUser,
   editUser,
   loginUser,
@@ -19,4 +20,6 @@ router.post("/", protect, validateRequest(createUserSchema), createUser);
 router.patch("/:id", protect, validateRequest(editUserSchema), editUser);
 router.post("/login", validateRequest(login), loginUser);
 router.post("/logout", logoutUser);
+router.get("/auth/check", checkAuth);
+
 export default router;
