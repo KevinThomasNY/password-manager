@@ -8,6 +8,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Menu, LogOut } from "lucide-react";
+import navbarIcon from "@/assets/navbar_icon.svg";
 
 export default function Dashboard() {
   const [open, setOpen] = useState(false);
@@ -48,7 +49,10 @@ export default function Dashboard() {
       {/* Navbar */}
       <header className="w-full bg-white text-black shadow-md">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <h1 className="text-xl font-semibold">Password Manager</h1>
+          <h1 className="text-xl font-semibold flex items-center gap-2">
+            <img src={navbarIcon} alt="Navbar Icon" className="w-8 h-8 " />
+            Password Manager
+          </h1>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-6">
