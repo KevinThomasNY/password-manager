@@ -1,5 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useState } from "react";
+import axiosInstance from "@/api/axiosInstance";
+import { useToast } from "@/components/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,6 +16,7 @@ export default function Dashboard() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const navLinks = [
     { name: "Home", path: "/dashboard" },
@@ -38,10 +41,25 @@ export default function Dashboard() {
       : `${baseClasses} text-black`;
   };
 
-  const handleLogout = () => {
-    // TODO: Replace with Logut API call
-    console.log("User logged out");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      const response = await axiosInstance.post("/users/logout");
+
+      if (response.status === 200 && response.data?.status === "success") {
+        toast({
+          title: "Logout Successful",
+          description: "You have successfully logged out.",
+        });
+        navigate("/");
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Logout Failed",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import axiosInstance from "@/api/axiosInstance";
-import { useToast } from "./hooks/use-toast";
+import { useToast } from "@/components/hooks/use-toast";
 
 const loginSchema = z.object({
   userName: z.string().min(3, "Username must be at least 3 characters"),
@@ -36,7 +36,7 @@ const LoginForm = () => {
       if (response.status === 200 && response.data?.status === "success") {
         toast({
           title: "Login Successful",
-          description: "You have successfully logged in",
+          description: "You have successfully logged in.",
         });
         navigate("/dashboard");
       }
