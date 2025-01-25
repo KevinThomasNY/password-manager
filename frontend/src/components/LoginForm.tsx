@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import axiosInstance from "@/api/axiosInstance";
 import { useToast } from "@/components/hooks/use-toast";
+import Logo from "@/assets/navbar_icon.svg";
 
 const loginSchema = z.object({
   userName: z.string().min(3, "Username must be at least 3 characters"),
@@ -56,7 +57,10 @@ const LoginForm = () => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 p-6 border rounded-md shadow-md w-full max-w-md mx-auto"
       >
-        <h2 className="text-2xl font-bold text-center">Login</h2>
+        <div className="flex items-center justify-center space-x-2 mb-8">
+          <img src={Logo} alt="Login Image" className="w-10 h-10" />
+          <h2 className="text-4xl font-semibold">Login</h2>
+        </div>
 
         {/* Username Field */}
         <FormField
