@@ -51,4 +51,10 @@ export const del = async <T>(
   return response.data;
 };
 
+export interface ApiResponse<T> {
+  status: string;
+  message: string;
+  data: T;
+}
+
 export default axiosInstance;
