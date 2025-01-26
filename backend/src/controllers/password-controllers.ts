@@ -8,6 +8,25 @@ import {
   ValidationError,
 } from "../middleware/error-middleware";
 
+export const getPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    logger.debug(`getPassword: user=${req.user?.id}`);
+    const passwords = await passwordModel.getPasswords(req.user?.id!);
+    logger.debug(`Passwords, ${JSON.stringify(passwords)}`);
+    successResponse({
+      res,
+      message: "Passwords fetched successfully",
+      data: passwords,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createPassword = async (
   req: Request,
   res: Response,

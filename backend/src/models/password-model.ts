@@ -6,6 +6,103 @@ import logger from "../utils/logger";
 import { eq, and, sql, count } from "drizzle-orm";
 import { currentTimeStamp } from "../utils/helpers";
 
+export async function getPasswords(user_id: number) {
+  logger.debug(`Getting passwords for user ID: ${user_id}`);
+
+  try {
+    interface SecurityQuestion {
+      id: number;
+      question: string;
+      answer: string;
+      createdAt: string;
+      updatedAt: string;
+    }
+
+    interface PasswordWithSecurityQuestions {
+      id: number;
+      name: string;
+      password: string;
+      image: string | null;
+      createdAt: string;
+      updatedAt: string;
+      securityQuestions: SecurityQuestion[];
+    }
+
+    const results = await db
+      .select({
+        passwordId: passwords.id,
+        name: passwords.name,
+        password: passwords.password,
+        image: passwords.image,
+        createdAt: passwords.createdAt,
+        updatedAt: passwords.updatedAt,
+        questionId: securityQuestions.id,
+        question: securityQuestions.question,
+        answer: securityQuestions.answer,
+        questionCreatedAt: securityQuestions.createdAt,
+        questionUpdatedAt: securityQuestions.updatedAt,
+      })
+      .from(passwords)
+      .leftJoin(
+        securityQuestions,
+        eq(passwords.id, securityQuestions.passwordId)
+      )
+      .where(eq(passwords.userId, user_id));
+
+    const groupedResults = results.reduce<Record<number, PasswordWithSecurityQuestions>>(
+      (acc, row) => {
+        const {
+          passwordId,
+          name,
+          password,
+          image,
+          createdAt,
+          updatedAt,
+          questionId,
+          question,
+          answer,
+          questionCreatedAt,
+          questionUpdatedAt,
+        } = row;
+
+        if (!acc[passwordId]) {
+          acc[passwordId] = {
+            id: passwordId,
+            name,
+            password,
+            image,
+            createdAt,
+            updatedAt,
+            securityQuestions: [],
+          };
+        }
+
+        if (questionId) {
+          acc[passwordId].securityQuestions.push({
+            id: questionId,
+            question: question!,
+            answer: answer!,
+            createdAt: questionCreatedAt!,
+            updatedAt: questionUpdatedAt!,
+          });
+        }
+
+        return acc;
+      },
+      {}
+    );
+
+    return Object.values(groupedResults);
+  } catch (error) {
+    logger.error(`Error getting passwords: ${error}`);
+    throw new AppError(
+      "Error getting passwords",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+
 export async function getPasswordCount(user_id: number) {
   logger.debug(`Getting password count for user ID: ${user_id}`);
   try {

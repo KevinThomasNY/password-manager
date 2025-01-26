@@ -4,6 +4,7 @@ import {
   editPassword,
   deletePassword,
   generatePassword,
+  getPassword,
 } from "../controllers/password-controllers";
 import protect from "../middleware/protect";
 import { validateRequest } from "../middleware/error-middleware";
@@ -13,6 +14,8 @@ import {
 } from "../validation/password-validation";
 
 const router = Router();
+
+router.get("/", protect, getPassword);
 
 router.post(
   "/",
