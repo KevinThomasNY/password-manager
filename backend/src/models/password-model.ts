@@ -14,6 +14,7 @@ export async function getPasswords(user_id: number) {
       .select({
         id: passwords.id,
         name: passwords.name,
+        password: passwords.password,
         image: passwords.image,
         createdAt: passwords.createdAt,
         updatedAt: passwords.updatedAt,
