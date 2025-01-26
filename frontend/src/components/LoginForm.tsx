@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import axiosInstance from "@/api/axiosInstance";
+import axiosInstance from "@/api/axios-instance";
 import { useToast } from "@/components/hooks/use-toast";
 import Logo from "@/assets/navbar_icon.svg";
 

@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useState } from "react";
-import axiosInstance from "@/api/axiosInstance";
+import axiosInstance from "@/api/axios-instance";
 import { useToast } from "@/components/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {

@@ -1,4 +1,4 @@
-import { get } from "./axiosInstance";
+import { get } from "./axios-instance";
 
 export const checkAuth = async (): Promise<boolean> => {
   try {

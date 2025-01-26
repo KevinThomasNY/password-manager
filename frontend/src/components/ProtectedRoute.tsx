@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { checkAuth } from "@/api/authApi";
+import { checkAuth } from "@/api/auth-api";
 
 const ProtectedRoute = () => {
   const { data: isAuthenticated, isLoading } = useQuery({
