@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { post } from "@/api/axios-instance";
+import { useToast } from "@/components/hooks/use-toast";
 
 interface PasswordCellProps {
   hashedPassword: string;
@@ -8,9 +9,9 @@ interface PasswordCellProps {
 export function PasswordCell({
   hashedPassword,
 }: PasswordCellProps): JSX.Element {
+  const { toast } = useToast();
   const [showDecrypted, setShowDecrypted] = useState<boolean>(false);
   const [decryptedPassword, setDecryptedPassword] = useState<string>("");
-  console.log(decryptedPassword);
 
   const handleClick = async (): Promise<void> => {
     if (showDecrypted) {
@@ -26,11 +27,12 @@ export function PasswordCell({
             password: hashedPassword,
           });
           const decrypted: string = responseData.data.decrypted;
-          console.log(decrypted);
           setDecryptedPassword(decrypted);
-
           await navigator.clipboard.writeText(decrypted);
-          console.log("Decrypted password copied to clipboard:", decrypted);
+          toast({
+            title: "Copied to clipboard",
+            duration: 1000,
+          });
         } catch (error) {
           console.error("Error decrypting password:", error);
           return;

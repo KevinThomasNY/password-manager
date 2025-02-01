@@ -28,15 +28,11 @@ import {
 } from "lucide-react";
 
 export default function Home() {
-  // Page & Page Size
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
 
-  // Controlled input for search
   const [inputValue, setInputValue] = useState("");
-  // The actual search value used for queries
   const [search, setSearch] = useState("");
-  // Row selection state
   const [rowSelection, setRowSelection] = useState({});
 
   const debouncedSetSearch = useMemo(
@@ -55,22 +51,17 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // Cleanup the debounce on unmount.
     return () => {
       debouncedSetSearch.cancel();
     };
   }, [debouncedSetSearch]);
 
-  // Fetch data from the API
   const { isLoading, error, data } = useQuery({
     queryKey: ["passwords", page, pageSize, search],
     queryFn: () => getPasswords(page, pageSize, search),
     refetchOnWindowFocus: false,
-    // If you upgrade to a version that supports it, you can add:
-    // keepPreviousData: true,
   });
 
-  // Prepare table options using useMemo.
   const tableOptions = useMemo(
     () => ({
       data: data?.data ?? [],
@@ -94,10 +85,8 @@ export default function Home() {
 
   const table = useReactTable(tableOptions);
 
-  // Instead of early returns, always render the search input and overall layout.
   return (
     <div className="container mx-auto p-4 space-y-4">
-      {/* Always rendered search input */}
       <form onSubmit={(e) => e.preventDefault()}>
         <Input
           type="text"
@@ -108,23 +97,19 @@ export default function Home() {
         />
       </form>
 
-      {/* Display error message inline if there's an error */}
       {error instanceof Error && (
         <div className="text-red-500 text-center p-4">
           An error has occurred: {error.message}
         </div>
       )}
 
-      {/* Data Table Container */}
       <div className="relative rounded-md border min-h-[200px]">
-        {/* Overlay a loading indicator if new data is loading */}
         {isLoading && (
           <div className="absolute inset-0 flex justify-center items-center bg-white bg-opacity-70 z-10">
             Loading...
           </div>
         )}
 
-        {/* Render table if data exists */}
         {data && (
           <Table>
             <TableHeader>
@@ -158,7 +143,6 @@ export default function Home() {
           </Table>
         )}
 
-        {/* Optionally, if there’s no data and not loading */}
         {!isLoading && data && data.data.length === 0 && (
           <div className="p-4 text-center text-muted-foreground">
             No data available
@@ -166,7 +150,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Footer: Selection Count, Total Items, and Pagination Controls */}
       <div className="flex items-center justify-between p-4">
         <div className="text-sm text-muted-foreground">
           {Object.keys(rowSelection).length} row
