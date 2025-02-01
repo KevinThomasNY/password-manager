@@ -66,10 +66,11 @@ export default function Home() {
     queryKey: ["passwords", page, pageSize, search],
     queryFn: () => getPasswords(page, pageSize, search),
     refetchOnWindowFocus: false,
+    // If you upgrade to a version that supports it, you can add:
+    // keepPreviousData: true,
   });
 
   // Prepare table options using useMemo.
-  // This object is memoized and then passed to the hook.
   const tableOptions = useMemo(
     () => ({
       data: data?.data ?? [],
@@ -93,31 +94,10 @@ export default function Home() {
 
   const table = useReactTable(tableOptions);
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
-  }
-  if (error instanceof Error) {
-    return (
-      <div className="text-red-500 text-center p-4">
-        An error has occurred: {error.message}
-      </div>
-    );
-  }
-  if (!data) {
-    return (
-      <div className="text-red-500 text-center p-4">No data available</div>
-    );
-  }
-
-  const totalPages = Math.ceil(data.total / pageSize);
-  const selectedRowCount = Object.keys(rowSelection).length;
-
+  // Instead of early returns, always render the search input and overall layout.
   return (
     <div className="container mx-auto p-4 space-y-4">
+      {/* Always rendered search input */}
       <form onSubmit={(e) => e.preventDefault()}>
         <Input
           type="text"
@@ -128,48 +108,73 @@ export default function Home() {
         />
       </form>
 
-      {/* Data Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      {/* Display error message inline if there's an error */}
+      {error instanceof Error && (
+        <div className="text-red-500 text-center p-4">
+          An error has occurred: {error.message}
+        </div>
+      )}
+
+      {/* Data Table Container */}
+      <div className="relative rounded-md border min-h-[200px]">
+        {/* Overlay a loading indicator if new data is loading */}
+        {isLoading && (
+          <div className="absolute inset-0 flex justify-center items-center bg-white bg-opacity-70 z-10">
+            Loading...
+          </div>
+        )}
+
+        {/* Render table if data exists */}
+        {data && (
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+
+        {/* Optionally, if there’s no data and not loading */}
+        {!isLoading && data && data.data.length === 0 && (
+          <div className="p-4 text-center text-muted-foreground">
+            No data available
+          </div>
+        )}
       </div>
 
       {/* Footer: Selection Count, Total Items, and Pagination Controls */}
       <div className="flex items-center justify-between p-4">
-        {/* Selected rows */}
         <div className="text-sm text-muted-foreground">
-          {selectedRowCount} row{selectedRowCount !== 1 && "s"} selected
+          {Object.keys(rowSelection).length} row
+          {Object.keys(rowSelection).length !== 1 && "s"} selected
         </div>
-        {/* Total items */}
         <div className="text-sm text-muted-foreground">
-          Total {data.total} items
+          Total {data ? data.total : 0} items
         </div>
-        {/* Pagination Controls */}
         <div className="flex items-center space-x-2">
           <Button
             type="button"
@@ -192,12 +197,16 @@ export default function Home() {
             <ChevronLeft size={16} />
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            Page {page} of {data ? Math.ceil(data.total / pageSize) : 1}
           </span>
           <Button
             type="button"
-            onClick={() => setPage((old) => Math.min(old + 1, totalPages))}
-            disabled={page >= totalPages}
+            onClick={() =>
+              setPage((old) =>
+                data ? Math.min(old + 1, Math.ceil(data.total / pageSize)) : old
+              )
+            }
+            disabled={data ? page >= Math.ceil(data.total / pageSize) : true}
             variant="outline"
             size="sm"
             aria-label="Next Page"
@@ -206,8 +215,10 @@ export default function Home() {
           </Button>
           <Button
             type="button"
-            onClick={() => setPage(totalPages)}
-            disabled={page >= totalPages}
+            onClick={() =>
+              data && setPage(Math.ceil(data.total / pageSize))
+            }
+            disabled={data ? page >= Math.ceil(data.total / pageSize) : true}
             variant="outline"
             size="sm"
             aria-label="Last Page"
