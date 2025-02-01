@@ -21,7 +21,7 @@ export default function Dashboard() {
 
   const navLinks = [
     { name: "Home", path: "/dashboard" },
-    { name: "Profile", path: "/dashboard/profile" },
+    { name: "Profile", path: "/profile" },
   ];
 
   // Utility function for desktop link classes

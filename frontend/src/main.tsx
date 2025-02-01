@@ -26,8 +26,8 @@ createRoot(document.getElementById("root")!).render(
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />}>
-                <Route index element={<Home />} />
+              <Route element={<Dashboard />}>
+                <Route path="dashboard" element={<Home />} />
                 <Route path="profile" element={<Profile />} />
               </Route>
             </Route>
