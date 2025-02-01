@@ -5,17 +5,25 @@ import {
   deletePassword,
   generatePassword,
   getPassword,
+  decryptPassword,
 } from "../controllers/password-controllers";
 import protect from "../middleware/protect";
 import { validateRequest } from "../middleware/error-middleware";
 import {
   createPasswordSchema,
+  decryptPasswordSchema,
   generatePasswordSchema,
 } from "../validation/password-validation";
 
 const router = Router();
 
 router.get("/", protect, getPassword);
+
+router.post(
+  "/decrypt-password",
+  validateRequest(decryptPasswordSchema),
+  decryptPassword
+);
 
 router.post(
   "/",

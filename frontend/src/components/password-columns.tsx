@@ -3,6 +3,7 @@ import { Password } from "@/api/password-api";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { MoreVertical } from "lucide-react";
+import PasswordCell from "./password-cell";
 
 export const columns: ColumnDef<Password>[] = [
   {
@@ -31,6 +32,10 @@ export const columns: ColumnDef<Password>[] = [
   {
     accessorKey: "password",
     header: "Password",
+    cell: ({ getValue }) => {
+      const hashedPassword = getValue() as string;
+      return <PasswordCell hashedPassword={hashedPassword} />;
+    },
   },
   {
     accessorKey: "createdAt",

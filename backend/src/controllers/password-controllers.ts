@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import logger from "../utils/logger";
-import { encrypt } from "../utils/crypto";
+import { encrypt, decrypt } from "../utils/crypto";
 import * as passwordModel from "../models/password-model";
 import { successResponse } from "../utils/response";
 import {
@@ -15,7 +15,7 @@ export const getPassword = async (
 ) => {
   try {
     logger.debug(`getPassword: user=${req.user?.id}`);
-    const {page = 1, pageSize = 10, search} = req.query
+    const { page = 1, pageSize = 10, search } = req.query;
     const passwords = await passwordModel.getPasswords(
       req.user?.id!,
       Number(page),
@@ -211,7 +211,7 @@ export const generatePassword = async (
       includeSymbols
     );
 
-    logger.debug(password)
+    logger.debug(password);
 
     successResponse({
       res: response,
@@ -252,6 +252,28 @@ export const deletePassword = async (
       message: "Password deleted successfully",
       data: data,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const decryptPassword = async (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  try {
+    const { password } = request.body;
+    logger.debug(`decryptPassword: password=${password}`);
+    const decrypted = decrypt(password);
+    logger.debug(`Decrypted password: ${decrypted}`);
+
+    successResponse({
+      res: response,
+      message: "Password decrypted successfully",
+      data: { decrypted },
+    });
+    return true;
   } catch (error) {
     next(error);
   }

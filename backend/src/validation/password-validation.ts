@@ -36,4 +36,11 @@ export const generatePasswordSchema = z.object({
   includeLowercase: z.boolean(),
   includeNumbers: z.boolean(),
   includeSymbols: z.boolean(),
-})
+});
+
+export const decryptPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(3, "Password must be at least 3 characters")
+    .max(512, "Password must be at most 256 characters"),
+});
