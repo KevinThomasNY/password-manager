@@ -15,7 +15,13 @@ export const getPassword = async (
 ) => {
   try {
     logger.debug(`getPassword: user=${req.user?.id}`);
-    const passwords = await passwordModel.getPasswords(req.user?.id!);
+    const {page = 1, pageSize = 10, search} = req.query
+    const passwords = await passwordModel.getPasswords(
+      req.user?.id!,
+      Number(page),
+      Number(pageSize),
+      search?.toString()
+    );
     logger.debug(`Passwords, ${JSON.stringify(passwords)}`);
     successResponse({
       res,

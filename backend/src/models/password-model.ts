@@ -3,14 +3,23 @@ import { passwords, securityQuestions } from "../db/schema";
 import { AppError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
-import { eq, and, sql, count } from "drizzle-orm";
+import { eq, and, sql, count, like } from "drizzle-orm";
 import { currentTimeStamp } from "../utils/helpers";
 
-export async function getPasswords(user_id: number) {
-  logger.debug(`Getting passwords for user ID: ${user_id}`);
-
+export async function getPasswords(
+  user_id: number,
+  page: number,
+  pageSize: number,
+  search?: string
+) {
   try {
-    const passwordData = await db
+    const whereConditions = [eq(passwords.userId, user_id)];
+
+    if (search) {
+      whereConditions.push(like(passwords.name, `%${search}%`));
+    }
+
+    const query = db
       .select({
         id: passwords.id,
         name: passwords.name,
@@ -20,8 +29,21 @@ export async function getPasswords(user_id: number) {
         updatedAt: passwords.updatedAt,
       })
       .from(passwords)
-      .where(eq(passwords.userId, user_id));
-    return passwordData;
+      .where(and(...whereConditions))
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
+
+    const countQuery = db
+      .select({ count: count() })
+      .from(passwords)
+      .where(and(...whereConditions));
+
+    const [data, total] = await Promise.all([query, countQuery]);
+
+    return {
+      data,
+      total: total[0].count,
+    };
   } catch (error) {
     logger.error(`Error getting passwords: ${error}`);
     throw new AppError(
