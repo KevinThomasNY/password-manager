@@ -17,6 +17,7 @@ export function PasswordCell({
     if (showDecrypted) {
       setShowDecrypted(false);
     } else {
+      let decrypted: string = decryptedPassword;
       if (!decryptedPassword) {
         try {
           const responseData = await post<{
@@ -26,18 +27,24 @@ export function PasswordCell({
           }>("/passwords/decrypt-password", {
             password: hashedPassword,
           });
-          const decrypted: string = responseData.data.decrypted;
+          decrypted = responseData.data.decrypted;
           setDecryptedPassword(decrypted);
-          await navigator.clipboard.writeText(decrypted);
-          toast({
-            title: "Copied to clipboard",
-            duration: 1000,
-          });
         } catch (error) {
           console.error("Error decrypting password:", error);
           return;
         }
       }
+
+      try {
+        await navigator.clipboard.writeText(decrypted);
+        toast({
+          title: "Copied to clipboard",
+          duration: 1000,
+        });
+      } catch (error) {
+        console.error("Failed to copy to clipboard:", error);
+      }
+      
       setShowDecrypted(true);
     }
   };
@@ -46,6 +53,7 @@ export function PasswordCell({
     <span
       onClick={handleClick}
       className="cursor-pointer text-blue-600 dark:text-blue-400 underline"
+      title="Click to toggle between hashed and decrypted password"
     >
       {showDecrypted ? decryptedPassword : displayHashed(hashedPassword)}
     </span>
