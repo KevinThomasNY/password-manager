@@ -26,6 +26,18 @@ export const columns: ColumnDef<Password>[] = [
     enableHiding: false,
   },
   {
+    accessorKey: "image",
+    header: "Icon",
+    cell: ({ row }) =>
+      row.original.image ? (
+        <img
+          src={row.original.image}
+          alt={row.original.name}
+          className="h-10 w-10"
+        />
+      ) : null,
+  },
+  {
     accessorKey: "name",
     header: "Name",
   },
@@ -44,18 +56,6 @@ export const columns: ColumnDef<Password>[] = [
   {
     accessorKey: "updatedAt",
     header: "Updated At",
-  },
-  {
-    accessorKey: "image",
-    header: "Image",
-    cell: ({ row }) =>
-      row.original.image ? (
-        <img
-          src={row.original.image}
-          alt={row.original.name}
-          className="h-10 w-10"
-        />
-      ) : null,
   },
   {
     id: "actions",
