@@ -1,9 +1,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Password } from "@/api/password-api";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { MoreVertical } from "lucide-react";
 import PasswordCell from "./password-cell";
+import VertaiclEllipsis from "./vertical-ellipsis-cell";
 
 export const columns: ColumnDef<Password>[] = [
   {
@@ -59,15 +58,6 @@ export const columns: ColumnDef<Password>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => (
-      <Button
-        variant="ghost"
-        className="p-0 bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent"
-        onClick={() => console.log("hello", row.original)}
-      >
-        <span className="sr-only">Open menu</span>
-        <MoreVertical className="h-4 w-4 text-black dark:text-white" />
-      </Button>
-    ),
+    cell: ({ row }) => <VertaiclEllipsis row={row.original} />,
   },
 ];
