@@ -15,6 +15,7 @@ import {
 import axiosInstance from "@/api/axios-instance";
 import { useToast } from "@/components/hooks/use-toast";
 import Logo from "@/assets/navbar_icon.svg";
+import { useQueryClient } from "@tanstack/react-query";
 
 const loginSchema = z.object({
   userName: z.string().min(3, "Username must be at least 3 characters"),
@@ -24,6 +25,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginForm = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { toast } = useToast();
   const form = useForm<LoginFormValues>({
@@ -39,6 +41,7 @@ const LoginForm = () => {
           title: "Login Successful",
           description: "You have successfully logged in.",
         });
+        queryClient.invalidateQueries({ queryKey: ["checkAuth"] });
         navigate("/dashboard");
       }
     } catch (error) {
