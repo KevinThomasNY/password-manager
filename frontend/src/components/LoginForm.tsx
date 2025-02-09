@@ -41,7 +41,7 @@ const LoginForm = () => {
           title: "Login Successful",
           description: "You have successfully logged in.",
         });
-        queryClient.invalidateQueries({ queryKey: ["checkAuth"] });
+        await queryClient.refetchQueries({ queryKey: ["checkAuth"] });
         navigate("/dashboard");
       }
     } catch (error) {
