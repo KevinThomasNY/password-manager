@@ -26,13 +26,7 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const {
-    mutate,
-    isPending,
-    isError,
-    isSuccess,
-    error,
-  } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: (id: number) => deletePassword(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["passwords"] });
@@ -66,7 +60,11 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
-            onSelect={() => setIsDeleteDialogOpen(true)}
+            onSelect={() => {
+              setTimeout(() => {
+                setIsDeleteDialogOpen(true);
+              }, 0);
+            }}
             className="flex items-center gap-2 px-3 py-1 text-sm text-red-500 hover:!text-red-600 transition-colors"
           >
             <Trash className="h-4 w-4 text-red-500" />
@@ -83,25 +81,21 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
             <DialogHeader>
               <DialogTitle>Confirm Delete</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete this item? This action cannot be undone.
+                Are you sure you want to delete this item? This action cannot be
+                undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button variant="destructive" onClick={handleDelete}>
                 Delete
               </Button>
             </DialogFooter>
-            {isError && (
-              <p className="mt-2 text-red-500 text-sm">
-                {error?.message ?? "An error occurred."}
-              </p>
-            )}
-            {isSuccess && (
-              <p className="mt-2 text-green-500 text-sm">Password deleted!</p>
-            )}
           </>
         )}
       </DialogContent>

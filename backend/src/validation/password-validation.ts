@@ -8,7 +8,10 @@ const questionAnswerSchema = z.object({
 export const createPasswordSchema = z
   .object({
     name: z.string().max(100, "Name must be at most 100 characters"),
-    password: z.string().max(256, "Password must be at most 256 characters"),
+    password: z
+      .string()
+      .min(5, "Password must be at least 5 characters")
+      .max(256, "Password must be at most 256 characters"),
     image: z
       .string()
       .max(256, "Image must be at most 256 characters")
@@ -44,3 +47,5 @@ export const decryptPasswordSchema = z.object({
     .min(3, "Password must be at least 3 characters")
     .max(512, "Password must be at most 256 characters"),
 });
+
+export type CreatePasswordFormValues = z.infer<typeof createPasswordSchema>;

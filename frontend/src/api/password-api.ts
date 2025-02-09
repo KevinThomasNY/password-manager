@@ -1,4 +1,4 @@
-import { get, del, ApiResponse } from "./axios-instance";
+import { get, post, del, ApiResponse } from "./axios-instance";
 
 export interface Password {
   id: number;
@@ -7,6 +7,16 @@ export interface Password {
   image?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AddPasswordInput {
+  name: string;
+  password: string;
+  image?: string;
+  questions?: {
+    question: string;
+    answer: string;
+  }[];
 }
 
 export interface PaginatedResponse<T> {
@@ -27,6 +37,21 @@ export const getPasswords = async (
   } catch (error) {
     console.error("Error fetching passwords", error);
     throw new Error("Failed to fetch passwords");
+  }
+};
+
+export const addPassword = async (
+  newPassword: AddPasswordInput
+): Promise<ApiResponse<Password>> => {
+  try {
+    const response = await post<ApiResponse<Password>>(
+      "/passwords",
+      newPassword
+    );
+    return response;
+  } catch (error) {
+    console.error("Error adding password", error);
+    throw new Error("Failed to add password");
   }
 };
 

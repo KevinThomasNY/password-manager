@@ -12,6 +12,7 @@ import { getPasswords } from "@/api/password-api";
 import { columns } from "@/components/password-columns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import AddPassword from "./AddPassword";
 import {
   Table,
   TableBody,
@@ -86,7 +87,11 @@ const PasswordTable = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-4">
-      <form onSubmit={(e) => e.preventDefault()}>
+      {/* Form with search input and Create PW button */}
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="w-full flex justify-between items-center"
+      >
         <Input
           type="text"
           placeholder="Search by name..."
@@ -94,6 +99,7 @@ const PasswordTable = () => {
           value={inputValue}
           className="max-w-sm"
         />
+        <AddPassword />
       </form>
 
       {error instanceof Error && (
