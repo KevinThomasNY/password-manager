@@ -21,17 +21,28 @@ export const createPasswordSchema = z
       .max(15, "You can add up to 15 questions only")
       .optional(),
   })
-  .refine(
-    (data) => {
-      return data.questions
-        ? data.questions.every((q) => q.question && q.answer)
-        : true;
-    },
-    {
-      message: "Each question must have a corresponding answer",
-      path: ["questions"],
+  .superRefine((data, ctx) => {
+    if (data.questions) {
+      data.questions.forEach((q, index) => {
+        // If a question is filled but the answer is empty:
+        if (q.question && !q.answer.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Answer is required if question is filled",
+            path: ["questions", index, "answer"],
+          });
+        }
+        // If an answer is filled but the question is empty:
+        if (!q.question.trim() && q.answer) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Question is required if answer is filled",
+            path: ["questions", index, "question"],
+          });
+        }
+      });
     }
-  );
+  });
 
 export const generatePasswordSchema = z.object({
   length: z.number().int().min(1, "Length must be at least 1"),
