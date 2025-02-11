@@ -23,6 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import GeneratePassword from "./GeneratePassword";
 import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPassword } from "@/api/password-api";
@@ -99,16 +100,23 @@ const AddPassword = () => {
               )}
             />
 
-            {/* Password Field */}
+            {/* Password Field with Generate Button */}
             <FormField
               control={control}
               name="password"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Password" type="password" {...field} />
-                  </FormControl>
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Input
+                        placeholder="Password"
+                        type="password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <GeneratePassword />
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
