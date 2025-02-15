@@ -14,6 +14,7 @@ import {
   decryptPasswordSchema,
   generatePasswordSchema,
 } from "../validation/password-validation";
+import { upload } from "../utils/file-storage"
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.post(
 router.post(
   "/",
   protect,
+  upload.single("image"),
   validateRequest(createPasswordSchema),
   createPassword
 );

@@ -41,13 +41,14 @@ export const getPasswords = async (
 };
 
 export const addPassword = async (
-  newPassword: AddPasswordInput
+  formData: FormData
 ): Promise<ApiResponse<Password>> => {
   try {
-    const response = await post<ApiResponse<Password>>(
-      "/passwords",
-      newPassword
-    );
+    const response = await post<ApiResponse<Password>>("/passwords", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response;
   } catch (error) {
     console.error("Error adding password", error);

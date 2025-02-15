@@ -1,17 +1,20 @@
 import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
-import cookieParser from 'cookie-parser';
-import cors from 'cors';
+import cookieParser from "cookie-parser";
+import cors from "cors";
 import { errorMiddleware } from "./middleware/error-middleware";
 import userRoutes from "./routes/user-routes";
 import passwordRoutes from "./routes/password-routes";
 import logger from "./utils/logger";
+import path from "path";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 const frontendOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(
   cors({
@@ -32,4 +35,3 @@ app.use(errorMiddleware);
 app.listen(port, () => {
   logger.info(`Server started at http://localhost:${port}`);
 });
-

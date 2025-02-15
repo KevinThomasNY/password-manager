@@ -12,10 +12,7 @@ export const createPasswordSchema = z
       .string()
       .min(5, "Password must be at least 5 characters")
       .max(256, "Password must be at most 256 characters"),
-    image: z
-      .string()
-      .max(256, "Image must be at most 256 characters")
-      .optional(),
+    image: z.instanceof(File).optional(),
     questions: z
       .array(questionAnswerSchema)
       .max(15, "You can add up to 15 questions only")

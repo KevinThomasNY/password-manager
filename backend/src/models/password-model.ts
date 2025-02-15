@@ -100,7 +100,7 @@ export async function checkExistingPassword(name: string, user_id: number) {
 export async function addPassword(
   name: string,
   password: string,
-  image: string,
+  image: string | undefined,
   userId: number
 ) {
   logger.debug(`Adding new password: name=${name}, image=${image}`);

@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+import fs from "fs";
+import path from "path";
 import logger from "../utils/logger";
 import { encrypt, decrypt } from "../utils/crypto";
 import * as passwordModel from "../models/password-model";
@@ -38,10 +40,16 @@ export const createPassword = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { name, password, image, questions } = req.body;
+  const { name, password, questions } = req.body;
+
+  const file = req.file;
+
+  const imagePath = file ? `/uploads/${file.filename}` : undefined;
 
   logger.debug(
-    `createPassword: name=${name}, image=${image}, questions=${questions}`
+    `createPassword: name=${name}, image=${imagePath}, questions=${JSON.stringify(
+      questions
+    )}`
   );
 
   try {
@@ -74,7 +82,7 @@ export const createPassword = async (
     const newPassword = await passwordModel.addPassword(
       name,
       encryptedPassword,
-      image,
+      imagePath,
       user_id
     );
     logger.info(
@@ -244,6 +252,18 @@ export const deletePassword = async (
       throw new UnauthorizedError(
         "You are not authorized to delete this password"
       );
+    }
+
+    if (password.image) {
+      const relativePath = password.image.startsWith("/") ? password.image.slice(1) : password.image;
+      const absolutePath = path.join(__dirname, "..", relativePath);
+    
+      try {
+        fs.unlinkSync(absolutePath);
+        logger.debug("Image file deleted successfully.");
+      } catch (err) {
+        logger.error("Error deleting image file:", err);
+      }
     }
 
     const data = await passwordModel.deletePasswordById(passwordId);

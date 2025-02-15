@@ -33,7 +33,7 @@ const AddPassword = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (newData: CreatePasswordFormValues) => addPassword(newData),
+    mutationFn: (formData: FormData) => addPassword(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["passwords"] });
       setIsDialogOpen(false);
@@ -46,7 +46,7 @@ const AddPassword = () => {
     defaultValues: {
       name: "",
       password: "",
-      image: "",
+      image: undefined,
       questions: [],
     },
   });
@@ -63,7 +63,23 @@ const AddPassword = () => {
   });
 
   const onSubmit = (data: CreatePasswordFormValues) => {
-    mutation.mutate(data);
+    const formData = new FormData();
+
+    formData.append("name", data.name);
+    formData.append("password", data.password);
+
+    if (data.image instanceof File) {
+      formData.append("image", data.image);
+    }
+
+    if (data.questions && data.questions.length > 0) {
+      data.questions.forEach((q, index) => {
+        formData.append(`questions[${index}][question]`, q.question);
+        formData.append(`questions[${index}][answer]`, q.answer);
+      });
+    }
+
+    mutation.mutate(formData);
   };
 
   return (
@@ -122,7 +138,7 @@ const AddPassword = () => {
               )}
             />
 
-            {/* Image Field (Optional) */}
+            {/* Image Field */}
             <FormField
               control={control}
               name="image"
@@ -130,7 +146,12 @@ const AddPassword = () => {
                 <FormItem>
                   <FormLabel>Image</FormLabel>
                   <FormControl>
-                    <Input placeholder="Image URL" {...field} />
+                    <Input
+                      type="file"
+                      onChange={(e) => {
+                        field.onChange(e.target.files?.[0]);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -193,7 +214,7 @@ const AddPassword = () => {
                 Add Question
               </Button>
 
-              {/* Show a generic error if the questions array fails validation */}
+              {/* Display validation errors for questions */}
               {errors.questions && (
                 <p className="text-red-500">
                   {typeof errors.questions.message === "string" &&
