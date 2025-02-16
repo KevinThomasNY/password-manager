@@ -7,11 +7,15 @@ const questionAnswerSchema = z.object({
 
 export const createPasswordSchema = z
   .object({
-    name: z.string().max(100, "Name must be at most 100 characters"),
+    name: z
+      .string()
+      .nonempty("Name is required")
+      .max(100, "Name must be at most 100 characters"),
     password: z
       .string()
+      .nonempty("Password is required")
       .min(5, "Password must be at least 5 characters")
-      .max(256, "Password must be at most 256 characters"),
+      .max(25, "Password must be at most 25 characters"),
     image: z.instanceof(File).optional(),
     questions: z
       .array(questionAnswerSchema)
@@ -42,7 +46,7 @@ export const createPasswordSchema = z
   });
 
 export const generatePasswordSchema = z.object({
-  length: z.number().int().min(1, "Length must be at least 1"),
+  length: z.number().int().min(5, "Length must be at least 5"),
   includeUppercase: z.boolean(),
   includeLowercase: z.boolean(),
   includeNumbers: z.boolean(),

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -24,13 +24,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import GeneratePassword from "./GeneratePassword";
+import EditGeneratePassword from "./EditGeneratePassword";
 import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPassword } from "@/api/password-api";
+import { usePasswordGeneratorStore } from "@/store/passwordGeneratorStore";
 
 const AddPassword = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { generatedPassword } = usePasswordGeneratorStore();
 
   const mutation = useMutation({
     mutationFn: (formData: FormData) => addPassword(formData),
@@ -55,12 +58,19 @@ const AddPassword = () => {
     control,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = form;
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "questions",
   });
+
+  useEffect(() => {
+    if (generatedPassword) {
+      setValue("password", generatedPassword);
+    }
+  }, [generatedPassword, setValue]);
 
   const onSubmit = (data: CreatePasswordFormValues) => {
     const formData = new FormData();
@@ -116,7 +126,7 @@ const AddPassword = () => {
               )}
             />
 
-            {/* Password Field with Generate Button */}
+            {/* Password Field with Generate & Edit Buttons */}
             <FormField
               control={control}
               name="password"
@@ -132,6 +142,7 @@ const AddPassword = () => {
                       />
                     </FormControl>
                     <GeneratePassword />
+                    <EditGeneratePassword />
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -158,7 +169,7 @@ const AddPassword = () => {
               )}
             />
 
-            {/* Security Questions Section */}
+            {/* Security Questions */}
             <div>
               <h3 className="text-lg font-semibold">Security Questions</h3>
               {fields.map((item, index) => (

@@ -280,9 +280,11 @@ export function generatePasswordModel(
     throw new Error("At least one character type must be selected.");
   }
 
-  let passwordChars: string[] = [];
+  if (length < requiredChars.length) {
+    throw new Error(`Length must be at least ${requiredChars.length}`);
+  }
 
-  passwordChars = passwordChars.concat(requiredChars);
+  let passwordChars: string[] = [...requiredChars];
 
   for (let i = requiredChars.length; i < length; i++) {
     const randomIndex = Math.floor(Math.random() * characterPool.length);
