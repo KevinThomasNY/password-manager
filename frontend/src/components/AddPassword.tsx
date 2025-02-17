@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import GeneratePassword from "./GeneratePassword";
 import EditGeneratePassword from "./EditGeneratePassword";
+import PasswordInput from "@/components/PasswordInput";
 import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPassword } from "@/api/password-api";
@@ -135,10 +136,10 @@ const AddPassword = () => {
                   <FormLabel>Password</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
-                      <Input
+                      <PasswordInput
+                        value={field.value}
+                        onChange={field.onChange}
                         placeholder="Password"
-                        type="password"
-                        {...field}
                       />
                     </FormControl>
                     <GeneratePassword />

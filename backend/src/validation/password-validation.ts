@@ -1,8 +1,16 @@
 import { z } from "zod";
 
 const questionAnswerSchema = z.object({
-  question: z.string().max(256, "Question must be at most 256 characters"),
-  answer: z.string().max(256, "Answer must be at most 256 characters"),
+  question: z
+    .string()
+    .trim()
+    .nonempty("Question is required")
+    .max(256, "Question must be at most 256 characters"),
+  answer: z
+    .string()
+    .trim()
+    .nonempty("Answer is required")
+    .max(256, "Answer must be at most 256 characters"),
 });
 
 export const createPasswordSchema = z

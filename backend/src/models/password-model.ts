@@ -5,6 +5,7 @@ import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
 import { eq, and, sql, count, like } from "drizzle-orm";
 import { currentTimeStamp } from "../utils/helpers";
+import { decrypt } from "../utils/crypto";
 
 export async function getPasswords(
   user_id: number,
@@ -304,6 +305,43 @@ export async function deletePasswordById(passwordId: number) {
     logger.error(`Error deleting password: ${error}`);
     throw new AppError(
       "Error deleting password",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+export async function getSecurityQuestions(passwordId: number, userId: number) {
+  logger.debug(
+    `Fetching security questions for password ID: ${passwordId} by user ID: ${userId}`
+  );
+  try {
+    const passwordRecord = await db
+      .select({ userId: passwords.userId })
+      .from(passwords)
+      .where(and(eq(passwords.id, passwordId), eq(passwords.userId, userId)))
+      .limit(1);
+    logger.debug(`Password Record exists: ${JSON.stringify(passwordRecord)}`);
+    if (passwordRecord.length === 0) {
+      throw new AppError("Password not found", StatusCodes.NOT_FOUND);
+    }
+    const questions = await db
+      .select({
+        question: securityQuestions.question,
+        answer: securityQuestions.answer,
+      })
+      .from(securityQuestions)
+      .where(eq(securityQuestions.passwordId, passwordId));
+    logger.debug(`Security Questions: ${JSON.stringify(questions)}`);
+
+    const decryptedQuestion = questions.map((q) => ({
+      question: q.question,
+      answer: decrypt(q.answer),
+    }));
+    return decryptedQuestion;
+  } catch (error) {
+    logger.error(`Error fetching security questions: ${error}`);
+    throw new AppError(
+      "Error fetching security questions",
       StatusCodes.INTERNAL_SERVER_ERROR
     );
   }

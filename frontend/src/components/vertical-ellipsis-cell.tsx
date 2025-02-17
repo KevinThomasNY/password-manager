@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { MoreVertical, Edit, Trash } from "lucide-react";
+
 import { Button } from "./ui/button";
 import { Password, deletePassword } from "@/api/password-api";
 import {
@@ -18,12 +19,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+import EditPassword from "./EditPassword";
+
 interface VerticalEllipsisProps {
   row: Password;
 }
 
 export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
@@ -38,34 +42,46 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
     mutate(row.id);
   };
 
+  const handleEditSelect = () => {
+    setTimeout(() => {
+      setIsEditDialogOpen(true);
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }, 0);
+  };
+
+  const handleDeleteSelect = () => {
+    setTimeout(() => {
+      setIsDeleteDialogOpen(true);
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }, 0);
+  };
+
   return (
-    <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+    <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            disabled={isDeleteDialogOpen}
-            className="p-0 bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent"
-          >
+          <Button variant="ghost" className="p-0 bg-transparent">
             <span className="sr-only">Open menu</span>
             <MoreVertical className="h-4 w-4 text-black dark:text-white" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-32 rounded-md border border-gray-200 bg-white shadow-md p-1 dark:border-gray-700 dark:bg-gray-900">
           <DropdownMenuItem
-            onSelect={() => console.log("Edit clicked")}
-            className="flex items-center gap-2 px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+            onSelect={handleEditSelect}
+            className="flex items-center gap-2 px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 
+                       dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
           >
             <Edit className="h-4 w-4" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
-            onSelect={() => {
-              setTimeout(() => {
-                setIsDeleteDialogOpen(true);
-              }, 0);
-            }}
-            className="flex items-center gap-2 px-3 py-1 text-sm text-red-500 hover:!text-red-600 transition-colors"
+            onSelect={handleDeleteSelect}
+            className="flex items-center gap-2 px-3 py-1 text-sm text-red-500 
+                       hover:!text-red-600 transition-colors"
           >
             <Trash className="h-4 w-4 text-red-500" />
             Delete
@@ -73,32 +89,45 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DialogContent>
-        {isPending ? (
-          <div>Deleting...</div>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>Confirm Delete</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this item? This action cannot be
-                undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDelete}>
-                Delete
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <div>
+            {isPending ? (
+              <div>Deleting...</div>
+            ) : (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Confirm Delete</DialogTitle>
+                  <DialogDescription>
+                    Are you sure? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDeleteDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={handleDelete}>
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <EditPassword
+        id={row.id}
+        name={row.name}
+        password={row.password}
+        image={row.image}
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
+    </>
   );
 }

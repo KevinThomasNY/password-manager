@@ -1,4 +1,4 @@
-import { get, post, del, ApiResponse } from "./axios-instance";
+import { get, post, patch, del, ApiResponse } from "./axios-instance";
 
 export interface Password {
   id: number;
@@ -90,5 +90,40 @@ export const generatePassword = async (
   } catch (error) {
     console.error("Error generating password", error);
     throw new Error("Failed to generate password");
+  }
+};
+
+export const getSecurityQuestions = async (
+  id: number
+): Promise<{ question: string; answer: string }[]> => {
+  try {
+    const response = await get<
+      ApiResponse<{ question: string; answer: string }[]>
+    >(`/passwords/${id}/questions`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching security questions", error);
+    throw new Error("Failed to fetch security questions");
+  }
+};
+
+export const editPassword = async (
+  id: number,
+  formData: FormData
+): Promise<ApiResponse<Password>> => {
+  try {
+    const response = await patch<ApiResponse<Password>>(
+      `/passwords/${id}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error editing password", error);
+    throw new Error("Failed to edit password");
   }
 };

@@ -111,6 +111,30 @@ export const createPassword = async (
   }
 };
 
+export const getSecurityQuestions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const passwordId = parseInt(req.params.id, 10);
+    logger.debug(`getSecurityQuestions: passwordId=${passwordId}`);
+    const userId = req.user?.id!;
+    const questions = await passwordModel.getSecurityQuestions(
+      passwordId,
+      userId
+    );
+
+    successResponse({
+      res,
+      message: "Security questions fetched successfully",
+      data: questions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const editPassword = async (
   req: Request,
   res: Response,
@@ -118,10 +142,15 @@ export const editPassword = async (
 ) => {
   const passwordId = parseInt(req.params.id, 10);
 
-  const { name, password, image, questions } = req.body;
+  const { name, password, questions } = req.body;
+  const file = req.file;
+
+  const imagePath = file ? `/uploads/${file.filename}` : undefined;
 
   logger.debug(
-    `editPassword: id=${passwordId}, name=${name}, image=${image}, questions=${questions}`
+    `editPassword: id=${passwordId}, name=${name}, image=${imagePath}, questions=${JSON.stringify(
+      questions
+    )}`
   );
 
   try {
@@ -151,11 +180,29 @@ export const editPassword = async (
 
     const encryptedPassword = encrypt(password);
 
-    const updatedPassword = await passwordModel.updatePassword(passwordId, {
+    if (imagePath && existingPassword.image) {
+      const oldImagePath = path.join(__dirname, "..", existingPassword.image);
+      fs.unlink(oldImagePath, (err) => {
+        if (err) {
+          logger.error("Error removing old image: ", err);
+        } else {
+          logger.info("Old image removed successfully");
+        }
+      });
+    }
+
+    const updateData: { name: string; password: string; image?: string } = {
       name,
       password: encryptedPassword,
-      image,
-    });
+    };
+    if (imagePath) {
+      updateData.image = imagePath;
+    }
+
+    const updatedPassword = await passwordModel.updatePassword(
+      passwordId,
+      updateData
+    );
 
     logger.info(
       `Password updated successfully: ${JSON.stringify(updatedPassword)}`
@@ -163,7 +210,7 @@ export const editPassword = async (
 
     await passwordModel.deleteSecurityQuestions(passwordId);
 
-    if (questions.length > 0) {
+    if (questions && questions.length > 0) {
       const questionTexts = questions.map(
         (q: { question: string }) => q.question
       );
@@ -255,9 +302,11 @@ export const deletePassword = async (
     }
 
     if (password.image) {
-      const relativePath = password.image.startsWith("/") ? password.image.slice(1) : password.image;
+      const relativePath = password.image.startsWith("/")
+        ? password.image.slice(1)
+        : password.image;
       const absolutePath = path.join(__dirname, "..", relativePath);
-    
+
       try {
         fs.unlinkSync(absolutePath);
         logger.debug("Image file deleted successfully.");
