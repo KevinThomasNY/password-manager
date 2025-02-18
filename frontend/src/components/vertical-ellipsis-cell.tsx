@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Edit, Trash } from "lucide-react";
+import { MoreVertical, Edit, Trash, View } from "lucide-react";
 
 import { Button } from "./ui/button";
 import { Password, deletePassword } from "@/api/password-api";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 
 import EditPassword from "./EditPassword";
-
+import SecurityQuestions from "./SecurityQuestions";
 interface VerticalEllipsisProps {
   row: Password;
 }
@@ -28,6 +28,8 @@ interface VerticalEllipsisProps {
 export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSecurityQuestionDialogOpen, setIsSecurityQuestionDialogOpen] =
+    useState(false);
   const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
@@ -45,6 +47,15 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
   const handleEditSelect = () => {
     setTimeout(() => {
       setIsEditDialogOpen(true);
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }, 0);
+  };
+
+  const handleSecurityQuestions = () => {
+    setTimeout(() => {
+      setIsSecurityQuestionDialogOpen(true);
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
@@ -69,7 +80,7 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
             <MoreVertical className="h-4 w-4 text-black dark:text-white" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-32 rounded-md border border-gray-200 bg-white shadow-md p-1 dark:border-gray-700 dark:bg-gray-900">
+        <DropdownMenuContent className="w-lg rounded-md border border-gray-200 bg-white shadow-md p-1 dark:border-gray-700 dark:bg-gray-900">
           <DropdownMenuItem
             onSelect={handleEditSelect}
             className="flex items-center gap-2 px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 
@@ -77,6 +88,14 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
           >
             <Edit className="h-4 w-4" />
             Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={handleSecurityQuestions}
+            className="flex items-center gap-2 px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 
+                       dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+          >
+            <View className="h-4 w-4" />
+            View Security Questions
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={handleDeleteSelect}
@@ -127,6 +146,13 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
         image={row.image}
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+      />
+
+      <SecurityQuestions
+        id={row.id}
+        name={row.name}
+        isOpen={isSecurityQuestionDialogOpen}
+        onOpenChange={setIsSecurityQuestionDialogOpen}
       />
     </>
   );

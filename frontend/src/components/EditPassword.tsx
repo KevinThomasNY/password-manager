@@ -288,6 +288,5 @@ const EditPassword = ({
     </Dialog>
   );
 };
-// /uploads/1739830662009-545749933-trees.png
-// uploads/1739830800426-573251301-1702132224508.jpeg
+
 export default EditPassword;
