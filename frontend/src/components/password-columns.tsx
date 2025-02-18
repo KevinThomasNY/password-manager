@@ -3,7 +3,7 @@ import { Password } from "@/api/password-api";
 import { Checkbox } from "@/components/ui/checkbox";
 import PasswordCell from "./password-cell";
 import VertaiclEllipsis from "./vertical-ellipsis-cell";
-
+import moment from "moment-timezone";
 export const columns: ColumnDef<Password>[] = [
   {
     id: "select",
@@ -51,10 +51,24 @@ export const columns: ColumnDef<Password>[] = [
   {
     accessorKey: "createdAt",
     header: "Created At",
+    cell: ({ getValue }) => {
+      const timestamp = getValue() as string;
+      return moment
+        .utc(timestamp)
+        .tz("America/New_York")
+        .format("MMM DD, YYYY h:mm A");
+    },
   },
   {
     accessorKey: "updatedAt",
     header: "Updated At",
+    cell: ({ getValue }) => {
+      const timestamp = getValue() as string;
+      return moment
+        .utc(timestamp)
+        .tz("America/New_York")
+        .format("MMM DD, YYYY h:mm A");
+    },
   },
   {
     id: "actions",
