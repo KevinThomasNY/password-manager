@@ -278,48 +278,58 @@ export const generatePassword = async (
   }
 };
 
-export const deletePassword = async (
-  request: Request,
-  response: Response,
+export const deletePasswordsBulk = async (
+  req: Request,
+  res: Response,
   next: NextFunction
 ) => {
   try {
-    const passwordId = parseInt(request.params.id, 10);
-    const password = await passwordModel.getPasswordById(
-      passwordId,
-      request.user?.id!
-    );
+    const { ids } = req.body;
 
-    if (!password) {
-      throw new ValidationError("Password not found.");
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ValidationError("Request must contain an array of ids.");
     }
 
-    const userId = password.userId;
-    if (userId !== request.user?.id) {
-      throw new UnauthorizedError(
-        "You are not authorized to delete this password"
+    const deletedResults = [];
+
+    for (const passwordId of ids) {
+      const password = await passwordModel.getPasswordById(
+        passwordId,
+        req.user?.id!
       );
-    }
 
-    if (password.image) {
-      const relativePath = password.image.startsWith("/")
-        ? password.image.slice(1)
-        : password.image;
-      const absolutePath = path.join(__dirname, "..", relativePath);
-
-      try {
-        fs.unlinkSync(absolutePath);
-        logger.debug("Image file deleted successfully.");
-      } catch (err) {
-        logger.error("Error deleting image file:", err);
+      if (!password) {
+        throw new ValidationError(`Password with id ${passwordId} not found.`);
       }
+
+      if (password.userId !== req.user?.id) {
+        throw new UnauthorizedError(
+          `You are not authorized to delete password with id ${passwordId}.`
+        );
+      }
+
+      if (password.image) {
+        const relativePath = password.image.startsWith("/")
+          ? password.image.slice(1)
+          : password.image;
+        const absolutePath = path.join(__dirname, "..", relativePath);
+
+        try {
+          fs.unlinkSync(absolutePath);
+          logger.debug(`Image file for password id ${passwordId} deleted successfully.`);
+        } catch (err) {
+          logger.error(`Error deleting image file for password id ${passwordId}:`, err);
+        }
+      }
+
+      const data = await passwordModel.deletePasswordById(passwordId);
+      deletedResults.push(data);
     }
 
-    const data = await passwordModel.deletePasswordById(passwordId);
     successResponse({
-      res: response,
-      message: "Password deleted successfully",
-      data: data,
+      res,
+      message: "Passwords deleted successfully",
+      data: deletedResults,
     });
   } catch (error) {
     next(error);

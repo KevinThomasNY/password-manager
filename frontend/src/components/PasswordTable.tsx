@@ -13,6 +13,7 @@ import { columns } from "@/components/password-columns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import AddPassword from "./AddPassword";
+import DeleteDialog from "./DeleteDialog"; // Import the delete component
 import {
   Table,
   TableBody,
@@ -27,6 +28,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+
 const PasswordTable = () => {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
@@ -34,6 +36,7 @@ const PasswordTable = () => {
   const [inputValue, setInputValue] = useState("");
   const [search, setSearch] = useState("");
   const [rowSelection, setRowSelection] = useState({});
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const debouncedSetSearch = useMemo(
     () =>
@@ -85,9 +88,14 @@ const PasswordTable = () => {
 
   const table = useReactTable(tableOptions);
 
+  const selectedIds = table
+    .getSelectedRowModel()
+    .rows.map((row) => row.original.id);
+  const isDeleteDisabled = selectedIds.length === 0;
+
   return (
     <div className="container mx-auto p-4 space-y-4">
-      {/* Form with search input and Create PW button */}
+      {/* Form with search input and action buttons */}
       <form
         onSubmit={(e) => e.preventDefault()}
         className="w-full flex justify-between items-center"
@@ -99,7 +107,17 @@ const PasswordTable = () => {
           value={inputValue}
           className="max-w-sm"
         />
-        <AddPassword />
+        <div className="flex space-x-2">
+          <Button
+            type="button"
+            onClick={() => setIsDeleteDialogOpen(true)}
+            disabled={isDeleteDisabled}
+            variant="destructive"
+          >
+            Delete
+          </Button>
+          <AddPassword />
+        </div>
       </form>
 
       {error instanceof Error && (
@@ -213,6 +231,13 @@ const PasswordTable = () => {
           </Button>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog
+        ids={selectedIds}
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      />
     </div>
   );
 };

@@ -66,17 +66,20 @@ export const addPassword = async (
   }
 };
 
-export const deletePassword = async (
-  id: number
-): Promise<ApiResponse<Password>> => {
+export const deletePasswordsBulk = async (
+  ids: number[]
+): Promise<ApiResponse<Password[]>> => {
   try {
-    const response = await del<ApiResponse<Password>>(`/passwords/${id}`);
+    const response = await del<ApiResponse<Password[]>>(`/passwords/bulk`, {
+      data: { ids },
+    });
     return response;
   } catch (error) {
-    console.error("Error deleting password", error);
-    throw new Error("Failed to delete password");
+    console.error("Error deleting passwords in bulk", error);
+    throw new Error("Failed to delete passwords");
   }
 };
+
 
 export const generatePassword = async (
   data: GeneratePasswordRequest

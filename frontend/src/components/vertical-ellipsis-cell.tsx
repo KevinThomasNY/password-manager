@@ -1,26 +1,19 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { MoreVertical, Edit, Trash, View } from "lucide-react";
 
 import { Button } from "./ui/button";
-import { Password, deletePassword } from "@/api/password-api";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 
 import EditPassword from "./EditPassword";
 import SecurityQuestions from "./SecurityQuestions";
+import DeleteDialog from "./DeleteDialog";
+import { Password } from "@/api/password-api";
+
 interface VerticalEllipsisProps {
   row: Password;
 }
@@ -30,19 +23,6 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSecurityQuestionDialogOpen, setIsSecurityQuestionDialogOpen] =
     useState(false);
-  const queryClient = useQueryClient();
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: (id: number) => deletePassword(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["passwords"] });
-      setIsDeleteDialogOpen(false);
-    },
-  });
-
-  const handleDelete = () => {
-    mutate(row.id);
-  };
 
   const handleEditSelect = () => {
     setTimeout(() => {
@@ -108,36 +88,11 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
-          <div>
-            {isPending ? (
-              <div>Deleting...</div>
-            ) : (
-              <>
-                <DialogHeader>
-                  <DialogTitle>Confirm Delete</DialogTitle>
-                  <DialogDescription>
-                    Are you sure? This action cannot be undone.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsDeleteDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button variant="destructive" onClick={handleDelete}>
-                    Delete
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <DeleteDialog
+        ids={[row.id]}
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      />
 
       <EditPassword
         id={row.id}
