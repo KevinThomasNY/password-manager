@@ -138,3 +138,27 @@ export const checkAuth = async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
   });
 };
+
+export const getLoginHistory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.user!;
+    logger.debug(`getLastLogin: userId=${id}`);
+    let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 1;
+    const lastLogin = await userModel.fetchLoginHistory(id, limit);
+    logger.debug(
+      `Login history fetched successfully: ${JSON.stringify(lastLogin)}`
+    );
+    successResponse({
+      res,
+      message: "Login History fetched Successfully",
+      data: lastLogin,
+      statusCode: StatusCodes.OK,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

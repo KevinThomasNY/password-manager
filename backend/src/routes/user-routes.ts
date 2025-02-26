@@ -3,6 +3,7 @@ import {
   checkAuth,
   createUser,
   editUser,
+  getLoginHistory,
   loginUser,
   logoutUser,
 } from "../controllers/user-controllers";
@@ -21,5 +22,6 @@ router.patch("/:id", protect, validateRequest(editUserSchema), editUser);
 router.post("/login", validateRequest(login), loginUser);
 router.post("/logout", logoutUser);
 router.get("/auth/check", checkAuth);
+router.get("/login-history", protect, getLoginHistory);
 
 export default router;

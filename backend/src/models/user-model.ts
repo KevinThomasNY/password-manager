@@ -1,6 +1,6 @@
 import { db } from "../db/db-connection";
 import { users, userLoginHistory } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { AppError, ValidationError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
@@ -154,6 +154,28 @@ export async function insertLoginHistory(userId: number, ipAddress: string) {
     logger.error(`Error inserting login history: ${error}`);
     throw new AppError(
       "Error inserting login history",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+export async function fetchLoginHistory(userId: number, limit: number) {
+  try {
+    logger.debug(`Fetching login history: userId=${userId}, limit=${limit}`);
+    const userHistory = await db
+      .select({
+        loginTime: userLoginHistory.loginTime,
+      })
+      .from(userLoginHistory)
+      .where(eq(userLoginHistory.userId, userId))
+      .orderBy(desc(userLoginHistory.loginTime))
+      .limit(limit);
+    logger.debug(`Login history fetched: ${JSON.stringify(userHistory)}`);
+    return userHistory;
+  } catch (error) {
+    logger.error(`Error fetching login history: ${error}`);
+    throw new AppError(
+      "Error fetching login history",
       StatusCodes.INTERNAL_SERVER_ERROR
     );
   }
