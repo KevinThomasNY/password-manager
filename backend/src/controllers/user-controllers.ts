@@ -148,6 +148,10 @@ export const getLoginHistory = async (
     const { id } = req.user!;
     logger.debug(`getLastLogin: userId=${id}`);
     let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 1;
+    if (limit >= 100) {
+      limit = 100;
+      logger.debug(`Limit exceeded, setting to 100`);
+    }
     const lastLogin = await userModel.fetchLoginHistory(id, limit);
     logger.debug(
       `Login history fetched successfully: ${JSON.stringify(lastLogin)}`
