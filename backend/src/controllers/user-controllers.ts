@@ -166,3 +166,30 @@ export const getLoginHistory = async (
     next(error);
   }
 };
+
+export const getProfileInformation = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.user!;
+    logger.debug(`getProfileInformation: userId=${id}`);
+    const profileInformation = await userModel.fetchUserById(id);
+    const { firstName, lastName, userName } = profileInformation;
+    const filteredProfile = { firstName, lastName, userName };
+    logger.debug(
+      `Profile information fetched successfully: ${JSON.stringify(
+        filteredProfile
+      )}`
+    );
+    successResponse({
+      res,
+      message: "Profile information fetched Successfully",
+      data: filteredProfile,
+      statusCode: StatusCodes.OK,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

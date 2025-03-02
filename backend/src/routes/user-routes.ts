@@ -4,6 +4,7 @@ import {
   createUser,
   editUser,
   getLoginHistory,
+  getProfileInformation,
   loginUser,
   logoutUser,
 } from "../controllers/user-controllers";
@@ -23,5 +24,6 @@ router.post("/login", validateRequest(login), loginUser);
 router.post("/logout", logoutUser);
 router.get("/auth/check", checkAuth);
 router.get("/login-history", protect, getLoginHistory);
+router.get("/profile-information", protect, getProfileInformation);
 
 export default router;
