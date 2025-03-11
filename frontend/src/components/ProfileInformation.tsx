@@ -33,7 +33,7 @@ const ProfileInformation = ({ profileQuery }: ProfileInformationProps) => {
     isError: profileIsError,
   } = profileQuery;
 
-  const [limit, setLimit] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(2);
   const [open, setOpen] = useState<boolean>(false);
 
   const loginHistory = useQuery({
@@ -53,10 +53,11 @@ const ProfileInformation = ({ profileQuery }: ProfileInformationProps) => {
   if (profileIsError || loginIsError) {
     return <div>Error loading profile information</div>;
   }
+  console.log(loginData);
 
-  const lastLoginEastern = loginData?.[0]?.loginTime
+  const lastLoginEastern = loginData?.[1]?.loginTime
     ? moment
-        .utc(loginData[0].loginTime)
+        .utc(loginData[1].loginTime)
         .tz("America/New_York")
         .format("MM/DD/YYYY h:mm A")
     : "N/A";
@@ -119,9 +120,18 @@ const ProfileInformation = ({ profileQuery }: ProfileInformationProps) => {
               return (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-2 bg-gray-100 rounded shadow-sm"
+                  className={`flex items-center justify-between p-2 rounded shadow-sm ${
+                    index === 0 ? "bg-green-100" : "bg-gray-100"
+                  }`}
                 >
-                  <span className="font-semibold text-gray-800">{date}</span>
+                  <span className="font-semibold text-gray-800">
+                    {date}{" "}
+                    {index === 0 && (
+                      <span className="ml-2 text-green-600 text-xs">
+                        (Current)
+                      </span>
+                    )}
+                  </span>
                   <span className="text-gray-600">{time}</span>
                 </div>
               );
