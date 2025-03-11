@@ -53,7 +53,6 @@ const ProfileInformation = ({ profileQuery }: ProfileInformationProps) => {
   if (profileIsError || loginIsError) {
     return <div>Error loading profile information</div>;
   }
-  console.log(loginData);
 
   const lastLoginEastern = loginData?.[1]?.loginTime
     ? moment

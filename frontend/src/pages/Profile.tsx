@@ -1,4 +1,7 @@
 import ProfileInformation from "@/components/ProfileInformation";
+import UpdateProfile from "@/components/UpdateProfile";
+import UpdatePassword from "@/components/UpdatePassword";
+
 import { useQuery } from "@tanstack/react-query";
 import { getProfileInformation } from "@/api/user-api";
 
@@ -15,8 +18,12 @@ const Profile = () => {
         <div>
           <ProfileInformation profileQuery={profileQuery} />
         </div>
-        <div>box 2</div>
-        <div className="md:col-span-2">box 3</div>
+        <div>
+          <UpdateProfile profileQuery={profileQuery} />
+        </div>
+        <div className="md:col-span-2">
+          <UpdatePassword />
+        </div>
       </div>
     </div>
   );
