@@ -47,26 +47,23 @@ export async function addNewUser(
   }
 }
 
-export async function updateUser(
+export async function updateUserProfile(
   userId: string,
   userName: string,
-  password: string,
   firstName: string,
   lastName: string
 ) {
   logger.debug(
-    `Updating user: userId=${userId}, userName=${userName}, firstName=${firstName}, lastName=${lastName}`
+    `Updating user profile: userId=${userId}, userName=${userName}, firstName=${firstName}, lastName=${lastName}`
   );
   try {
     const time = currentTimeStamp();
-    const numUserId = parseInt(userId);
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const numUserId = parseInt(userId, 10);
+
     const [user] = await db
       .update(users)
       .set({
         userName,
-        password: hashedPassword,
         firstName,
         lastName,
         updatedAt: time,
@@ -74,15 +71,77 @@ export async function updateUser(
       .where(eq(users.id, numUserId))
       .returning({
         userName: users.userName,
+        firstName: users.firstName,
+        lastName: users.lastName,
       });
+
     if (!user) {
       throw new ValidationError("User not found");
     }
     return user;
   } catch (error) {
-    logger.error(`Error updating user: ${error}`);
+    logger.error(`Error updating user profile: ${error}`);
     throw new AppError(
-      "Error updating user",
+      "Error updating user profile",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+}
+
+export async function updateUserPassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+) {
+  logger.debug(`Updating password for user: userId=${userId}`);
+  try {
+    const numUserId = parseInt(userId, 10);
+
+    const [userRecord] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, numUserId));
+
+    if (!userRecord) {
+      throw new ValidationError("User not found");
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, userRecord.password);
+    if (!isMatch) {
+      throw new ValidationError("Current password is incorrect");
+    }
+
+    const isNewPasswordSame = await bcrypt.compare(
+      newPassword,
+      userRecord.password
+    );
+    if (isNewPasswordSame) {
+      throw new ValidationError(
+        "New password must be different from the current password"
+      );
+    }
+
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    const time = currentTimeStamp();
+
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        password: hashedPassword,
+        updatedAt: time,
+      })
+      .where(eq(users.id, numUserId))
+      .returning({ userName: users.userName });
+
+    if (!updatedUser) {
+      throw new ValidationError("User not found after update");
+    }
+    return updatedUser;
+  } catch (error) {
+    logger.error(`Error updating password: ${error}`);
+    throw new AppError(
+      "Error updating password",
       StatusCodes.INTERNAL_SERVER_ERROR
     );
   }

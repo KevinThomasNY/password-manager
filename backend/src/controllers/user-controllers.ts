@@ -41,26 +41,38 @@ export const editUser = async (
 ) => {
   try {
     const { id } = req.params;
-    const { userName, password, firstName, lastName } = req.body;
+
     if (parseInt(id, 10) !== req.user?.id) {
-      logger.error("Unauthorized access to edit user");
+      logger.error("Unauthorized access to update user");
       return next(new UnauthorizedError());
     }
-    logger.debug(
-      `editUser: userId=${id}, userName=${userName}, firstName=${firstName}, lastName=${lastName}`
-    );
-    const user = await userModel.updateUser(
-      id,
-      userName,
-      password,
-      firstName,
-      lastName
-    );
-    logger.info(`User updated successfully: ${JSON.stringify(user)}`);
-    successResponse({
+
+    let updatedUser;
+    let message: string;
+
+    if ("currentPassword" in req.body) {
+      updatedUser = await userModel.updateUserPassword(
+        id,
+        req.body.currentPassword,
+        req.body.newPassword
+      );
+      message = "Password updated successfully";
+      logger.info(`Password updated successfully for user ${id}`);
+    } else {
+      updatedUser = await userModel.updateUserProfile(
+        id,
+        req.body.userName,
+        req.body.firstName,
+        req.body.lastName
+      );
+      message = "Profile updated successfully";
+      logger.info(`Profile updated successfully for user ${id}`);
+    }
+
+    return successResponse({
       res,
-      message: "User updated Successfully",
-      data: user,
+      message,
+      data: updatedUser,
       statusCode: StatusCodes.OK,
     });
   } catch (error) {
