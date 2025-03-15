@@ -1,4 +1,4 @@
-import { get, ApiResponse } from "./axios-instance";
+import { get, patch, ApiResponse } from "./axios-instance";
 
 export interface LoginRecord {
   loginTime: string;
@@ -32,4 +32,15 @@ export const getProfileInformation = async () => {
     console.error("Error fetching profile information", error);
     throw new Error("Failed to fetch profile information");
   }
+};
+
+export const editUserProfile = async (
+  id: number,
+  formData: FormData
+): Promise<ProfileInformation> => {
+  const response = await patch<ApiResponse<ProfileInformation>>(
+    `/users/${id}`,
+    formData
+  );
+  return response.data;
 };
