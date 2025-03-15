@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -32,6 +33,7 @@ interface UpdateProfileProps {
 }
 
 const UpdateProfile = ({ profileQuery }: UpdateProfileProps) => {
+  const { userId } = useAuthStore();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { data: profileData, isLoading, isError } = profileQuery;
@@ -64,8 +66,8 @@ const UpdateProfile = ({ profileQuery }: UpdateProfileProps) => {
 
   const mutation = useMutation({
     mutationFn: (formData: FormData) => {
-      const userId = 4;
-      return editUserProfile(userId, formData);
+      const user_id = userId!;
+      return editUserProfile(user_id, formData);
     },
     onSuccess: (updatedProfile: ProfileInformation) => {
       toast({

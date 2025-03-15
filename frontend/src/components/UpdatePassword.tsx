@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/store/useAuthStore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -23,6 +24,7 @@ type EditUserPasswordFormValues = {
 };
 
 const UpdatePassword = () => {
+  const { userId } = useAuthStore();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -44,12 +46,10 @@ const UpdatePassword = () => {
 
   const mutation = useMutation({
     mutationFn: (formData: FormData) => {
-      const userId = 4;
-      return editUserProfile(userId, formData);
+      const user_id = userId!;
+      return editUserProfile(user_id, formData);
     },
-    onSuccess: (data) => {
-      console.log("API Response:", data);
-
+    onSuccess: () => {
       toast({
         title: "Password Updated",
         description: "Your password has been updated successfully.",

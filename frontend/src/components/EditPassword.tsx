@@ -132,7 +132,6 @@ const EditPassword = ({
       formData.append(`questions[${index}][question]`, q.question);
       formData.append(`questions[${index}][answer]`, q.answer);
     });
-    console.log(Array.from(formData.entries()));
 
     mutation.mutate(formData);
   };

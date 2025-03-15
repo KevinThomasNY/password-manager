@@ -25,7 +25,6 @@ const GeneratePasswordComponent = () => {
       return generatePassword(requestData);
     },
     onSuccess: (response) => {
-      console.log(response)
       setGeneratedPassword(response.data);
     },
   });

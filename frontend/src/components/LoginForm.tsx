@@ -35,7 +35,6 @@ const LoginForm = () => {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       const response = await loginUser(data);
-      console.log(response);
 
       if (response.status === "success") {
         toast({

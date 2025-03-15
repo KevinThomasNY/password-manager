@@ -137,7 +137,6 @@ export const logoutUser = async (req: Request, res: Response) => {
 
 export const checkAuth = async (req: Request, res: Response) => {
   const token = req.cookies.token;
-
   if (!token) {
     return res.status(StatusCodes.UNAUTHORIZED).json({
       status: "error",
@@ -146,11 +145,27 @@ export const checkAuth = async (req: Request, res: Response) => {
     });
   }
 
-  successResponse({
-    res,
-    message: "User is authenticated",
-    statusCode: StatusCodes.OK,
-  });
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.SECRET_KEY!
+    ) as jwt.JwtPayload;
+
+    const userId = decoded.id;
+
+    successResponse({
+      res,
+      message: "User is authenticated",
+      data: { userId },
+      statusCode: StatusCodes.OK,
+    });
+  } catch (error) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      status: "error",
+      message: "Unauthorized",
+      data: null,
+    });
+  }
 };
 
 export const getLoginHistory = async (
