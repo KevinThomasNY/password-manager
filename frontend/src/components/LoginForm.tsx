@@ -12,10 +12,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import axiosInstance from "@/api/axios-instance";
 import { useToast } from "@/components/hooks/use-toast";
 import Logo from "@/assets/navbar_icon.svg";
 import { useQueryClient } from "@tanstack/react-query";
+import { loginUser } from "@/api/user-api";
 
 const loginSchema = z.object({
   userName: z.string().min(3, "Username must be at least 3 characters"),
@@ -34,9 +34,10 @@ const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await axiosInstance.post("/users/login", data);
+      const response = await loginUser(data);
+      console.log(response);
 
-      if (response.status === 200 && response.data?.status === "success") {
+      if (response.status === "success") {
         toast({
           title: "Login Successful",
           description: "You have successfully logged in.",

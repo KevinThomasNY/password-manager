@@ -111,7 +111,9 @@ export const loginUser = async (
     successResponse({
       res,
       message: "User logged in Successfully",
-      data: user.userName,
+      data: {
+        userName: user.userName,
+      },
       statusCode: StatusCodes.OK,
     });
   } catch (error) {
