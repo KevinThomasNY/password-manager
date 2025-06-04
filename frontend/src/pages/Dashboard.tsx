@@ -1,4 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import axiosInstance from "@/api/axios-instance";
 import { useToast } from "@/components/hooks/use-toast";
@@ -14,6 +15,7 @@ import navbarIcon from "@/assets/navbar_icon.svg";
 import ModeToggle from "@/components/ModeToggle";
 
 export default function Dashboard() {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -47,6 +49,7 @@ export default function Dashboard() {
       const response = await axiosInstance.post("/users/logout");
 
       if (response.status === 200 && response.data?.status === "success") {
+        queryClient.invalidateQueries({ queryKey: ["checkAuth"] });
         toast({
           title: "Logout Successful",
           description: "You have successfully logged out.",
