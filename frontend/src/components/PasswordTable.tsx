@@ -13,7 +13,7 @@ import { columns } from "@/components/password-columns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import AddPassword from "./AddPassword";
-import DeleteDialog from "./DeleteDialog"; // Import the delete component
+import DeleteDialog from "./DeleteDialog";
 import {
   Table,
   TableBody,
@@ -118,7 +118,7 @@ const PasswordTable = () => {
           placeholder="Search by name..."
           onChange={handleSearchChange}
           value={inputValue}
-          className="w-full sm:max-w-sm" /* full-width on mobile, fixed max-width on sm+ */
+          className="w-full sm:max-w-sm"
         />
 
         <div className="flex flex-wrap gap-2 sm:ml-auto">
@@ -126,6 +126,7 @@ const PasswordTable = () => {
             type="button"
             onClick={handleExportJSON}
             variant="outline"
+            disabled={!data || data.data.length === 0}
             className="flex-1 sm:flex-none flex items-center justify-center gap-1"
           >
             <Download size={16} />
