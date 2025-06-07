@@ -11,8 +11,11 @@
     "paths": {
       "*": ["src/*"]
     },
-    "types": ["node"]
+    "types": ["node","jest"]
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*", // Your source files
+    "tests/**/*"  // Your test files
+  ],
   "files": ["src/types/express.d.ts"]
 }
