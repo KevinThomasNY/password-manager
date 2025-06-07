@@ -27,6 +27,7 @@ import {
   ChevronLast,
   ChevronLeft,
   ChevronRight,
+  Download,
 } from "lucide-react";
 
 const PasswordTable = () => {
@@ -51,6 +52,12 @@ const PasswordTable = () => {
     const value = e.target.value;
     setInputValue(value);
     debouncedSetSearch(value);
+  };
+
+  const handleExportJSON = () => {
+    window.location.href = `${
+      import.meta.env.VITE_API_BASE_URL
+    }/passwords/export/json`;
   };
 
   useEffect(() => {
@@ -98,21 +105,38 @@ const PasswordTable = () => {
       {/* Form with search input and action buttons */}
       <form
         onSubmit={(e) => e.preventDefault()}
-        className="w-full flex justify-between items-center"
+        className="
+    w-full 
+    flex flex-wrap       /* allow wrapping */
+    flex-col sm:flex-row /* stack on mobile, row on sm+ */
+    items-stretch sm:items-center 
+    gap-2                /* space all around */
+  "
       >
         <Input
           type="text"
           placeholder="Search by name..."
           onChange={handleSearchChange}
           value={inputValue}
-          className="max-w-sm"
+          className="w-full sm:max-w-sm" /* full-width on mobile, fixed max-width on sm+ */
         />
-        <div className="flex space-x-2">
+
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
+          <Button
+            type="button"
+            onClick={handleExportJSON}
+            variant="outline"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1"
+          >
+            <Download size={16} />
+            Export
+          </Button>
           <Button
             type="button"
             onClick={() => setIsDeleteDialogOpen(true)}
             disabled={isDeleteDisabled}
             variant="destructive"
+            className="flex-1 sm:flex-none"
           >
             Delete
           </Button>

@@ -357,3 +357,63 @@ export const decryptPassword = async (
     next(error);
   }
 };
+
+export const exportPasswordsJson = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id!;
+    
+    logger.debug(`Exporting passwords for user ID: ${userId}`);
+    
+    const passwords = await passwordModel.getPasswords(
+      userId,
+      1,
+      10000,
+      undefined
+    );
+    
+    logger.debug(`Found ${passwords.data.length} passwords to export`);
+    
+    const passwordsWithQuestions = await Promise.all(
+      passwords.data.map(async (password) => {
+        logger.debug(`Processing password ID: ${password.id}`);
+        
+        const questions = await passwordModel.getSecurityQuestions(
+          password.id,
+          userId
+        ) || [];
+        
+        logger.debug(`Found ${questions.length} security questions for password ID: ${password.id}`);
+        
+        const decryptedQuestions = Array.isArray(questions) ? 
+          questions.map(q => ({
+            question: q.question,
+            answer: q.answer ? decrypt(q.answer) : ''
+          })) : [];
+        
+        return {
+          id: password.id,
+          name: password.name,
+          password: password.password ? decrypt(password.password) : '',
+          securityQuestions: decryptedQuestions,
+          createdAt: password.createdAt,
+          updatedAt: password.updatedAt
+        };
+      })
+    );
+    
+    logger.debug('Finished processing passwords for export');
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="passwords-export.json"');
+    
+    res.status(200).json(passwordsWithQuestions);
+    
+  } catch (error) {
+    logger.error('Error exporting passwords to JSON:', error);
+    next(error);
+  }
+};

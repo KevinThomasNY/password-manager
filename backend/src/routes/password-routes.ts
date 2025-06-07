@@ -7,6 +7,7 @@ import {
   decryptPassword,
   getSecurityQuestions,
   deletePasswordsBulk,
+  exportPasswordsJson,
 } from "../controllers/password-controllers";
 import protect from "../middleware/protect";
 import { validateRequest } from "../middleware/error-middleware";
@@ -47,4 +48,6 @@ router.post(
   generatePassword
 );
 router.delete("/:id", protect, deletePasswordsBulk);
+router.get("/export/json", protect, exportPasswordsJson)
+
 export default router;
