@@ -32,7 +32,7 @@ export const columns: ColumnDef<Password>[] = [
         <img
           src={`${import.meta.env.VITE_BASE_URL}${row.original.image}`}
           alt={row.original.name}
-          className="h-10 w-10 object-cover"
+          className="h-10 w-10 object-cover rounded-md"
         />
       ) : null,
   },
