@@ -10,6 +10,29 @@ This application allows users to:
 - Generate strong passwords
 - Manage user profile and security questions
 
+## Screenshots
+
+### Home
+![Home](docs/screenshots/home.png)
+
+### Login
+![Login](docs/screenshots/login.png)
+
+### Add Password
+![Add Password](docs/screenshots/add-password.png)
+
+### Edit Password
+![Edit Password](docs/screenshots/edit-password.png)
+
+### Password Generation Rules
+![Password Generation Rules](docs/screenshots/edit-password-generation-rules.png)
+
+### Profile
+![Profile](docs/screenshots/profile.png)
+
+### Login History
+![Login History](docs/screenshots/login-history.png)
+
 ## Technologies
 
 ### Frontend
