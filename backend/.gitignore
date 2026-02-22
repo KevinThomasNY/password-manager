@@ -23,6 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
-password_manager.db
+*.db
 drizzle/
 uploads/

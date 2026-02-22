@@ -39,6 +39,8 @@ cd backend
 cp .env.example .env
 # Update .env with your values
 npm install
+npm run generate
+npm run migrate
 npm run dev
 ```
 
