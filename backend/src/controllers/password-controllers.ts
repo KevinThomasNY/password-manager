@@ -168,7 +168,7 @@ export const editPassword = async (
       );
     }
     logger.debug(`Current user ID: ${req.user?.id}`);
-    if (name !== existingPassword.name) {
+    if (name.toLowerCase() !== existingPassword.name.toLowerCase()) {
       const passwordExists = await passwordModel.checkExistingPassword(
         name,
         req.user?.id!
