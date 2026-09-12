@@ -40,7 +40,7 @@ export const editUser = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? "" : req.params.id;
 
     if (parseInt(id, 10) !== req.user?.id) {
       logger.error("Unauthorized access to update user");

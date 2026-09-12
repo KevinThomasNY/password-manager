@@ -117,7 +117,8 @@ export const getSecurityQuestions = async (
   next: NextFunction
 ) => {
   try {
-    const passwordId = parseInt(req.params.id, 10);
+    const id = Array.isArray(req.params.id) ? "" : req.params.id;
+    const passwordId = parseInt(id, 10);
     logger.debug(`getSecurityQuestions: passwordId=${passwordId}`);
     const userId = req.user?.id!;
     const questions = await passwordModel.getSecurityQuestions(
@@ -140,7 +141,8 @@ export const editPassword = async (
   res: Response,
   next: NextFunction
 ) => {
-  const passwordId = parseInt(req.params.id, 10);
+  const id = Array.isArray(req.params.id) ? "" : req.params.id;
+  const passwordId = parseInt(id, 10);
 
   const { name, password, questions } = req.body;
   const file = req.file;
