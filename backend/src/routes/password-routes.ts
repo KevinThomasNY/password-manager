@@ -23,6 +23,7 @@ const router = Router();
 router.get("/", protect, getPassword);
 router.post(
   "/decrypt-password",
+  protect,
   validateRequest(decryptPasswordSchema),
   decryptPassword
 );

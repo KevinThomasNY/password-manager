@@ -24,7 +24,6 @@ export async function getPasswords(
       .select({
         id: passwords.id,
         name: passwords.name,
-        password: passwords.password,
         image: passwords.image,
         createdAt: passwords.createdAt,
         updatedAt: passwords.updatedAt,
@@ -185,11 +184,7 @@ export async function updatePassword(
     image?: string;
   }
 ) {
-  logger.debug(
-    `Updating password ID: ${passwordId} with updates: ${JSON.stringify(
-      updates
-    )}`
-  );
+  logger.debug(`Updating password ID: ${passwordId}`);
   try {
     const updatedRows = await db
       .update(passwords)
@@ -331,7 +326,7 @@ export async function getSecurityQuestions(passwordId: number, userId: number) {
       })
       .from(securityQuestions)
       .where(eq(securityQuestions.passwordId, passwordId));
-    logger.debug(`Security Questions: ${JSON.stringify(questions)}`);
+    logger.debug(`Found ${questions.length} security questions`);
 
     const decryptedQuestion = questions.map((q) => ({
       question: q.question,

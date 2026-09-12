@@ -4,11 +4,11 @@ import { post } from "@/api/axios-instance";
 import { useToast } from "@/components/hooks/use-toast";
 
 interface PasswordCellProps {
-  hashedPassword: string;
+  passwordId: number;
 }
 
 export function PasswordCell({
-  hashedPassword,
+  passwordId,
 }: PasswordCellProps): JSX.Element {
   const { toast } = useToast();
   const [showDecrypted, setShowDecrypted] = useState<boolean>(false);
@@ -22,7 +22,7 @@ export function PasswordCell({
         message: string;
         data: { decrypted: string };
       }>("/passwords/decrypt-password", {
-        password: hashedPassword,
+        id: passwordId,
       });
       return responseData.data.decrypted;
     },
@@ -51,6 +51,7 @@ export function PasswordCell({
   const handleClick = (): void => {
     if (showDecrypted) {
       setShowDecrypted(false);
+      setDecryptedPassword("");
     } else {
       if (decryptedPassword) {
         navigator.clipboard
@@ -75,6 +76,7 @@ export function PasswordCell({
     if (showDecrypted) {
       timerRef.current = setTimeout(() => {
         setShowDecrypted(false);
+        setDecryptedPassword("");
       }, 30000);
     }
 
@@ -90,19 +92,15 @@ export function PasswordCell({
     <span
       onClick={handleClick}
       className="cursor-pointer text-blue-600 dark:text-blue-400 underline"
-      title="Click to toggle between hashed and decrypted password"
+      title="Click to reveal and copy password"
     >
       {isPending
         ? "Decrypting..."
         : showDecrypted
         ? decryptedPassword
-        : displayHashed(hashedPassword)}
+        : "••••••••••••••••"}
     </span>
   );
-}
-
-function displayHashed(hashed: string): string {
-  return `${hashed.slice(0, 16)}...`;
 }
 
 export default PasswordCell;

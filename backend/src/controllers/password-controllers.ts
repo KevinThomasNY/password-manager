@@ -6,6 +6,7 @@ import { encrypt, decrypt } from "../utils/crypto";
 import * as passwordModel from "../models/password-model";
 import { successResponse } from "../utils/response";
 import {
+  NotFoundError,
   UnauthorizedError,
   ValidationError,
 } from "../middleware/error-middleware";
@@ -24,7 +25,7 @@ export const getPassword = async (
       Number(pageSize),
       search?.toString()
     );
-    logger.debug(`Passwords, ${JSON.stringify(passwords)}`);
+    logger.debug(`Fetched ${passwords.data.length} password records`);
     successResponse({
       res,
       message: "Passwords fetched successfully",
@@ -47,9 +48,7 @@ export const createPassword = async (
   const imagePath = file ? `/uploads/${file.filename}` : undefined;
 
   logger.debug(
-    `createPassword: name=${name}, image=${imagePath}, questions=${JSON.stringify(
-      questions
-    )}`
+    `createPassword: name=${name}, image=${imagePath}, questionCount=${questions?.length ?? 0}`
   );
 
   try {
@@ -150,9 +149,7 @@ export const editPassword = async (
   const imagePath = file ? `/uploads/${file.filename}` : undefined;
 
   logger.debug(
-    `editPassword: id=${passwordId}, name=${name}, image=${imagePath}, questions=${JSON.stringify(
-      questions
-    )}`
+    `editPassword: id=${passwordId}, name=${name}, image=${imagePath}, questionCount=${questions?.length ?? 0}`
   );
 
   try {
@@ -268,8 +265,6 @@ export const generatePassword = async (
       includeSymbols
     );
 
-    logger.debug(password);
-
     successResponse({
       res: response,
       message: "Password generated successfully",
@@ -344,10 +339,16 @@ export const decryptPassword = async (
   next: NextFunction
 ) => {
   try {
-    const { password } = request.body;
-    logger.debug(`decryptPassword: password=${password}`);
-    const decrypted = decrypt(password);
-    logger.debug(`Decrypted password: ${decrypted}`);
+    const { id } = request.body;
+    const userId = request.user?.id!;
+    const passwordRecord = await passwordModel.getPasswordById(id, userId);
+
+    if (!passwordRecord) {
+      throw new NotFoundError("Password not found");
+    }
+
+    const decrypted = decrypt(passwordRecord.password);
+    logger.debug(`Password decrypted for record ID: ${id}`);
 
     successResponse({
       res: response,
@@ -382,6 +383,15 @@ export const exportPasswordsJson = async (
     const passwordsWithQuestions = await Promise.all(
       passwords.data.map(async (password) => {
         logger.debug(`Processing password ID: ${password.id}`);
+
+        const passwordRecord = await passwordModel.getPasswordById(
+          password.id,
+          userId
+        );
+
+        if (!passwordRecord) {
+          throw new NotFoundError("Password not found");
+        }
         
         const questions = await passwordModel.getSecurityQuestions(
           password.id,
@@ -393,13 +403,13 @@ export const exportPasswordsJson = async (
         const decryptedQuestions = Array.isArray(questions) ? 
           questions.map(q => ({
             question: q.question,
-            answer: q.answer ? decrypt(q.answer) : ''
+            answer: q.answer
           })) : [];
         
         return {
           id: password.id,
           name: password.name,
-          password: password.password ? decrypt(password.password) : '',
+          password: decrypt(passwordRecord.password),
           securityQuestions: decryptedQuestions,
           createdAt: password.createdAt,
           updatedAt: password.updatedAt

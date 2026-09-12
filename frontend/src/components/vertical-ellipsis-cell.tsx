@@ -97,7 +97,6 @@ export default function VerticalEllipsis({ row }: VerticalEllipsisProps) {
       <EditPassword
         id={row.id}
         name={row.name}
-        password={row.password}
         image={row.image}
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}

@@ -41,12 +41,9 @@ export const columns: ColumnDef<Password>[] = [
     header: "Name",
   },
   {
-    accessorKey: "password",
+    id: "password",
     header: "Password",
-    cell: ({ getValue }) => {
-      const hashedPassword = getValue() as string;
-      return <PasswordCell hashedPassword={hashedPassword} />;
-    },
+    cell: ({ row }) => <PasswordCell passwordId={row.original.id} />,
   },
   {
     accessorKey: "createdAt",

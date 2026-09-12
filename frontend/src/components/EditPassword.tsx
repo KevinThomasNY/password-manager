@@ -33,7 +33,6 @@ import { usePasswordGeneratorStore } from "@/store/passwordGeneratorStore";
 interface EditPasswordProps {
   id: number;
   name: string;
-  password: string;
   image?: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -42,7 +41,6 @@ interface EditPasswordProps {
 const EditPassword = ({
   id,
   name,
-  password,
   image,
   isOpen,
   onOpenChange,
@@ -71,7 +69,7 @@ const EditPassword = ({
     mutationFn: async () => {
       const response = await post<{ data: { decrypted: string } }>(
         "/passwords/decrypt-password",
-        { password }
+        { id }
       );
       return response.data.decrypted;
     },
@@ -87,7 +85,7 @@ const EditPassword = ({
     resolver: zodResolver(createPasswordSchema),
     defaultValues: {
       name: name ?? "",
-      password: password ?? "",
+      password: "",
       image: undefined,
       questions: [],
     },
@@ -105,13 +103,13 @@ const EditPassword = ({
     if (isOpen) {
       reset({
         name,
-        password,
+        password: "",
         image: undefined,
         questions: questionsData ?? [],
       });
       decryptPassword();
     }
-  }, [isOpen, name, password, questionsData, reset, decryptPassword]);
+  }, [isOpen, name, questionsData, reset, decryptPassword]);
 
   useEffect(() => {
     if (generatedPassword) {

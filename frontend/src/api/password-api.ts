@@ -3,7 +3,6 @@ import { get, post, patch, del, ApiResponse } from "./axios-instance";
 export interface Password {
   id: number;
   name: string;
-  password: string;
   image?: string;
   createdAt: string;
   updatedAt: string;

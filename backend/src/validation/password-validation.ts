@@ -62,10 +62,7 @@ export const generatePasswordSchema = z.object({
 });
 
 export const decryptPasswordSchema = z.object({
-  password: z
-    .string()
-    .min(3, "Password must be at least 3 characters")
-    .max(512, "Password must be at most 256 characters"),
+  id: z.number().int().positive("Password ID must be a positive integer"),
 });
 
 export type CreatePasswordFormValues = z.infer<typeof createPasswordSchema>;
