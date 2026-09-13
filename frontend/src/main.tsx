@@ -12,6 +12,9 @@ import "./index.css";
 import { Toaster } from "./components/ui/toaster.tsx";
 import { ThemeProvider } from "@/components/ThemeProvider.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import Register from "./pages/Register.tsx";
+import Admin from "./pages/Admin.tsx";
+import AdminRoute from "./components/AdminRoute.tsx";
 
 const queryClient = new QueryClient();
 
@@ -23,12 +26,16 @@ createRoot(document.getElementById("root")!).render(
           <Toaster />
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route element={<Dashboard />}>
                 <Route path="dashboard" element={<Home />} />
                 <Route path="profile" element={<Profile />} />
+                <Route element={<AdminRoute />}>
+                  <Route path="admin" element={<Admin />} />
+                </Route>
               </Route>
             </Route>
 

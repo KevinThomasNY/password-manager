@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
 import { SECURITY_POLICY } from "../constants/security-policy";
+import { AccountStatus, UserRole } from "../constants/account-policy";
 
 export const users = sqliteTable("users", {
   id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
@@ -16,10 +17,32 @@ export const users = sqliteTable("users", {
   lastName: text("last_name", {
     length: SECURITY_POLICY.PROFILE_NAME_MAX_LENGTH,
   }).notNull(),
+  role: text("role").$type<UserRole>().notNull().default(UserRole.User),
+  status: text("status")
+    .$type<AccountStatus>()
+    .notNull()
+    .default(AccountStatus.Active),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(current_timestamp)`),
   updatedAt: text("last_updated")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+});
+
+export const invitations = sqliteTable("invitations", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  tokenHash: text("token_hash").notNull().unique(),
+  createdByUserId: integer("created_by_user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  consumedByUserId: integer("consumed_by_user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  expiresAt: text("expires_at").notNull(),
+  consumedAt: text("consumed_at"),
+  revokedAt: text("revoked_at"),
+  createdAt: text("created_at")
     .notNull()
     .default(sql`(current_timestamp)`),
 });

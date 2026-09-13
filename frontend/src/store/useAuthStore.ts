@@ -1,11 +1,24 @@
 import { create } from "zustand";
+import {
+  AccountStatus,
+  UserRole,
+} from "../../../backend/src/constants/account-policy";
+
+export interface AuthenticatedUser {
+  userId: number;
+  userName: string;
+  role: UserRole;
+  status: AccountStatus;
+}
 
 type AuthState = {
   userId: number | null;
-  setUserId: (userId: number | null) => void;
+  user: AuthenticatedUser | null;
+  setUser: (user: AuthenticatedUser | null) => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   userId: null,
-  setUserId: (userId) => set({ userId }),
+  user: null,
+  setUser: (user) => set({ user, userId: user?.userId ?? null }),
 }));

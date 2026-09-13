@@ -4,6 +4,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
+    "admin:create": "node dist/cli/admin.js create",
+    "admin:promote": "node dist/cli/admin.js promote",
     "dev": "nodemon src/server.ts",
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",

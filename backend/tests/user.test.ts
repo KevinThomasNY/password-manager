@@ -1,10 +1,5 @@
 import request from "supertest";
-import { eq } from "drizzle-orm";
 import app from "../src/app";
-import { db } from "../src/db/db-connection";
-import { users } from "../src/db/schema";
-
-const TEST_CREATED_USERNAME = "newUser";
 
 const baseLoginPayload = {
   userName: process.env.TEST_USER_NAME,
@@ -12,14 +7,6 @@ const baseLoginPayload = {
 };
 
 describe("User Routes", () => {
-  beforeAll(async () => {
-    await db.delete(users).where(eq(users.userName, TEST_CREATED_USERNAME));
-  });
-
-  afterAll(async () => {
-    await db.delete(users).where(eq(users.userName, TEST_CREATED_USERNAME));
-  });
-
   describe("POST /api/users/login", () => {
     it("should login existing user", async () => {
       const res = await request(app)
@@ -36,30 +23,6 @@ describe("User Routes", () => {
         .send({ userName: "invalidUser", password: "wrongPassword" });
 
       expect(res.statusCode).toBe(401);
-    });
-  });
-
-  describe("POST /api/users", () => {
-    const createUserPayload = {
-      userName: TEST_CREATED_USERNAME,
-      password: "newPassword123",
-      firstName: "New",
-      lastName: "User",
-    };
-
-    it("should create a new user when logged in", async () => {
-      const agent = request.agent(app);
-
-      const loginRes = await agent
-        .post("/api/users/login")
-        .send({ ...baseLoginPayload });
-
-      expect(loginRes.statusCode).toBe(200);
-
-      const res = await agent.post("/api/users").send({ ...createUserPayload });
-
-      expect(res.statusCode).toBe(201);
-      expect(res.body).toHaveProperty("message", "User created Successfully");
     });
   });
 

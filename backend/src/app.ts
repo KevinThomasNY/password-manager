@@ -10,8 +10,13 @@ import cors from "cors";
 import { errorMiddleware } from "./middleware/error-middleware";
 import userRoutes from "./routes/user-routes";
 import passwordRoutes from "./routes/password-routes";
+import { adminRouter, publicAccountRouter } from "./routes/account-routes";
 
 const app = express();
+
+if (process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", 1);
+}
 
 const frontendOrigin =
   process.env.FRONTEND_ORIGIN || "http://localhost:5173";
@@ -31,6 +36,8 @@ app.get("/api/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
+app.use("/api", publicAccountRouter);
+app.use("/api/admin", adminRouter);
 app.use("/api/users", userRoutes);
 app.use("/api/passwords", passwordRoutes);
 

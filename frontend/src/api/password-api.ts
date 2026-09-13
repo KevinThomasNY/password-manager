@@ -49,8 +49,7 @@ export const getPasswords = async (
       `/passwords?page=${page}&pageSize=${pageSize}&search=${search || ""}`
     );
     return response.data;
-  } catch (error) {
-    console.error("Error fetching passwords", error);
+  } catch {
     throw new Error("Failed to fetch passwords");
   }
 };
@@ -65,8 +64,7 @@ export const addPassword = async (
       },
     });
     return response;
-  } catch (error) {
-    console.error("Error adding password", error);
+  } catch {
     throw new Error("Failed to add password");
   }
 };
@@ -79,8 +77,7 @@ export const deletePasswordsBulk = async (
       data: { ids },
     });
     return response;
-  } catch (error) {
-    console.error("Error deleting passwords in bulk", error);
+  } catch {
     throw new Error("Failed to delete passwords");
   }
 };
@@ -95,8 +92,7 @@ export const generatePassword = async (
       data
     );
     return response;
-  } catch (error) {
-    console.error("Error generating password", error);
+  } catch {
     throw new Error("Failed to generate password");
   }
 };
@@ -109,8 +105,7 @@ export const getSecurityQuestions = async (
       ApiResponse<{ question: string; answer: string }[]>
     >(`/passwords/${id}/questions`);
     return response.data;
-  } catch (error) {
-    console.error("Error fetching security questions", error);
+  } catch {
     throw new Error("Failed to fetch security questions");
   }
 };
@@ -130,8 +125,7 @@ export const editPassword = async (
       }
     );
     return response;
-  } catch (error) {
-    console.error("Error editing password", error);
+  } catch {
     throw new Error("Failed to edit password");
   }
 };

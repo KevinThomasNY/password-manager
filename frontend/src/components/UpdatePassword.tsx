@@ -57,8 +57,7 @@ const UpdatePassword = () => {
       reset();
       queryClient.invalidateQueries({ queryKey: ["profileInformation"] });
     },
-    onError: (error) => {
-      console.error("Error updating password:", error);
+    onError: () => {
       toast({
         title: "Password Update Failed",
         description:

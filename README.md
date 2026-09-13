@@ -54,6 +54,18 @@ This application allows users to:
 - [Zod](https://zod.dev/)
 - [Jest](https://jestjs.io/)
 
+## Account access
+
+On an empty database, the login page presents a one-time administrator setup.
+After that account is created, public registration closes. Administrators create
+single-use, expiring links from the Admin page and share them directly; the app
+does not send email.
+
+Invitation tokens are placed in the URL fragment so they are not sent in HTTP
+requests or reverse-proxy access logs. The frontend removes the fragment after it
+loads the token. Administrators can revoke unused invitations, promote trusted
+users, and disable accounts without gaining access to those users' vaults.
+
 ## Getting Started
 
 ### Docker (recommended)
@@ -85,6 +97,18 @@ docker compose down
 `docker compose down` preserves the named data volume. Do not use the `--volumes`
 option unless you intentionally want to permanently delete the database and
 uploaded files.
+
+If an administrator forgets their master password, restore administrative access
+from the Ubuntu server without resetting or decrypting the inaccessible vault:
+
+```bash
+docker compose exec password-manager npm run admin:promote -- existing_username
+docker compose exec password-manager npm run admin:create
+```
+
+The create command prompts for the master password without displaying it. These
+commands restore the administrator role only; they cannot recover an encrypted
+vault whose master password has been lost.
 
 ### Backend
 ```bash

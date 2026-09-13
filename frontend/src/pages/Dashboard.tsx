@@ -13,6 +13,8 @@ import {
 import { Menu, LogOut } from "lucide-react";
 import navbarIcon from "@/assets/navbar_icon.svg";
 import ModeToggle from "@/components/ModeToggle";
+import { useAuthStore } from "@/store/useAuthStore";
+import { UserRole } from "../../../backend/src/constants/account-policy";
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -20,10 +22,15 @@ export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const currentUser = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
 
   const navLinks = [
     { name: "Home", path: "/dashboard" },
     { name: "Profile", path: "/profile" },
+    ...(currentUser?.role === UserRole.Admin
+      ? [{ name: "Admin", path: "/admin" }]
+      : []),
   ];
 
   // Utility function for desktop link classes
@@ -49,6 +56,7 @@ export default function Dashboard() {
       const response = await axiosInstance.post("/users/logout");
 
       if (response.status === 200 && response.data?.status === "success") {
+        setUser(null);
         queryClient.invalidateQueries({ queryKey: ["checkAuth"] });
         toast({
           title: "Logout Successful",

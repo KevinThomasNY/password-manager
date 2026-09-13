@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   checkAuth,
-  createUser,
   editUser,
   getLoginHistory,
   getProfileInformation,
@@ -10,19 +9,20 @@ import {
 } from "../controllers/user-controllers";
 import { validateRequest } from "../middleware/error-middleware";
 import protect from "../middleware/protect";
-import {
-  createUserSchema,
-  editUserSchema,
-  login,
-} from "../validation/user-validation";
+import { editUserSchema, login } from "../validation/user-validation";
+import { createRateLimiter } from "../middleware/rate-limit";
+import { ACCOUNT_POLICY } from "../constants/account-policy";
 
 const router = Router();
+const loginRateLimiter = createRateLimiter({
+  maximumAttempts: ACCOUNT_POLICY.AUTH_ATTEMPT_LIMIT,
+  windowMilliseconds: ACCOUNT_POLICY.AUTH_RATE_LIMIT_WINDOW_MS,
+});
 
-router.post("/", protect, validateRequest(createUserSchema), createUser);
 router.patch("/:id", protect, validateRequest(editUserSchema), editUser);
-router.post("/login", validateRequest(login), loginUser);
+router.post("/login", loginRateLimiter, validateRequest(login), loginUser);
 router.post("/logout", logoutUser);
-router.get("/auth/check", checkAuth);
+router.get("/auth/check", protect, checkAuth);
 router.get("/login-history", protect, getLoginHistory);
 router.get("/profile-information", protect, getProfileInformation);
 

@@ -5,34 +5,7 @@ import { successResponse } from "../utils/response";
 import { UnauthorizedError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
-
-export const createUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { userName, password, firstName, lastName } = req.body;
-    logger.debug(
-      `createUser: userName=${userName}, firstName=${firstName}, lastName=${lastName}`
-    );
-    const user = await userModel.addNewUser(
-      userName,
-      password,
-      firstName,
-      lastName
-    );
-    logger.info(`User created successfully: ${JSON.stringify(user)}`);
-    successResponse({
-      res,
-      message: "User created Successfully",
-      data: user,
-      statusCode: StatusCodes.CREATED,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+import { ACCOUNT_POLICY, AccountStatus } from "../constants/account-policy";
 
 export const editUser = async (
   req: Request,
@@ -89,19 +62,22 @@ export const loginUser = async (
     const { userName, password } = req.body;
     logger.debug(`loginUser: userName=${userName}`);
     const user = await userModel.fetchUserByEmail(userName);
+    if (user.status !== AccountStatus.Active) {
+      throw new UnauthorizedError("Invalid username or password");
+    }
     await userModel.comparePassword(password, user.password);
     const token = jwt.sign(
       { id: user.id, username: user.userName },
       process.env.SECRET_KEY!,
       {
-        expiresIn: "1h",
+        expiresIn: ACCOUNT_POLICY.SESSION_DURATION_SECONDS,
       }
     );
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 3600000,
+      maxAge: ACCOUNT_POLICY.SESSION_DURATION_SECONDS * 1000,
     });
     const ipAddress =
       (req.headers["x-forwarded-for"]?.toString().split(",")[0] || req.ip) ??
@@ -113,6 +89,7 @@ export const loginUser = async (
       message: "User logged in Successfully",
       data: {
         userName: user.userName,
+        role: user.role,
       },
       statusCode: StatusCodes.OK,
     });
@@ -136,36 +113,17 @@ export const logoutUser = async (req: Request, res: Response) => {
 };
 
 export const checkAuth = async (req: Request, res: Response) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      status: "error",
-      message: "Unauthorized",
-      data: null,
-    });
-  }
-
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.SECRET_KEY!
-    ) as jwt.JwtPayload;
-
-    const userId = decoded.id;
-
-    successResponse({
-      res,
-      message: "User is authenticated",
-      data: { userId },
-      statusCode: StatusCodes.OK,
-    });
-  } catch (error) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      status: "error",
-      message: "Unauthorized",
-      data: null,
-    });
-  }
+  successResponse({
+    res,
+    message: "User is authenticated",
+    data: {
+      userId: req.user!.id,
+      userName: req.user!.username,
+      role: req.user!.role,
+      status: req.user!.status,
+    },
+    statusCode: StatusCodes.OK,
+  });
 };
 
 export const getLoginHistory = async (

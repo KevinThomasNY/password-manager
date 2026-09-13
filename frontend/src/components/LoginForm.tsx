@@ -44,8 +44,7 @@ const LoginForm = () => {
         await queryClient.refetchQueries({ queryKey: ["checkAuth"] });
         navigate("/dashboard");
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast({
         title: "Login Failed",
         description: "Please try again.",

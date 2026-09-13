@@ -31,8 +31,7 @@ export const loginUser = async (credentials: LoginCredentials) => {
       credentials
     );
     return response;
-  } catch (error) {
-    console.error("Login failed", error);
+  } catch {
     throw new Error("Invalid username or password");
   }
 };
