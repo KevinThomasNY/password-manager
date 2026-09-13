@@ -203,7 +203,7 @@ const EditPassword = ({
                       {image && (
                         <div className="mb-2">
                           <img
-                            src={`${import.meta.env.VITE_API_BASE_URL}/passwords/${id}/image`}
+                            src={`${import.meta.env.VITE_API_BASE_URL || "/api"}/passwords/${id}/image`}
                             alt={name}
                             className="w-xl object-cover rounded"
                           />

@@ -56,6 +56,36 @@ This application allows users to:
 
 ## Getting Started
 
+### Docker (recommended)
+
+Docker Compose builds the React frontend and Node backend into one image. The
+application listens on localhost by default, and its SQLite database and uploads
+are stored in a persistent Docker volume.
+
+```bash
+cp .env.example .env
+openssl rand -hex 32 # use as SECRET_KEY
+openssl rand -hex 32 # use as ENCRYPTION_KEY
+# Add both generated values to .env, then start the app:
+docker compose up --build -d
+```
+
+Open `http://localhost:3000` for local testing. On an Ubuntu server, keep the
+container bound to `127.0.0.1` and put Caddy or another HTTPS reverse proxy in
+front of it before allowing other devices to connect.
+
+Useful commands:
+
+```bash
+docker compose ps
+docker compose logs -f password-manager
+docker compose down
+```
+
+`docker compose down` preserves the named data volume. Do not use the `--volumes`
+option unless you intentionally want to permanently delete the database and
+uploaded files.
+
 ### Backend
 ```bash
 cd backend

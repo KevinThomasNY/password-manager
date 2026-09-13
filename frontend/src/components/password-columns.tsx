@@ -30,7 +30,7 @@ export const columns: ColumnDef<Password>[] = [
     cell: ({ row }) =>
       row.original.image ? (
         <img
-          src={`${import.meta.env.VITE_API_BASE_URL}/passwords/${row.original.id}/image`}
+          src={`${import.meta.env.VITE_API_BASE_URL || "/api"}/passwords/${row.original.id}/image`}
           alt={row.original.name}
           className="h-10 w-10 object-cover rounded-md"
         />

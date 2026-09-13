@@ -23,7 +23,10 @@ const GIF_87A_SIGNATURE = Buffer.from("GIF87a", "ascii");
 const GIF_89A_SIGNATURE = Buffer.from("GIF89a", "ascii");
 const RIFF_SIGNATURE = Buffer.from("RIFF", "ascii");
 const WEBP_SIGNATURE = Buffer.from("WEBP", "ascii");
-const uploadDirectory = path.join(__dirname, "..", "uploads");
+const DEFAULT_UPLOAD_DIRECTORY = path.join(__dirname, "..", "uploads");
+const uploadDirectory = path.resolve(
+  process.env.UPLOAD_DIRECTORY || DEFAULT_UPLOAD_DIRECTORY
+);
 const allowedImageMimeTypes = new Set<string>(
   Object.values(AllowedImageMimeType)
 );

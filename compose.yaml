@@ -1,0 +1,40 @@
+services:
+  password-manager:
+    build:
+      context: .
+    image: password-manager:local
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_PATH: /data/password-manager.db
+      UPLOAD_DIRECTORY: /data/uploads
+      FRONTEND_DIST_PATH: /app/public
+      MIGRATIONS_DIRECTORY: /app/drizzle
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    volumes:
+      - password_manager_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  password_manager_data:

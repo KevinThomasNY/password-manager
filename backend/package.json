@@ -2,7 +2,8 @@
   "name": "backend",
   "version": "1.0.0",
   "scripts": {
-    "start": "ts-node src/db/db-connection.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",

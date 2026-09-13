@@ -1,6 +1,7 @@
 // src/app.ts
 import express from "express";
 import dotenv from "dotenv";
+import path from "path";
 dotenv.config();
 
 import cookieParser from "cookie-parser";
@@ -26,8 +27,26 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.use("/api/users", userRoutes);
 app.use("/api/passwords", passwordRoutes);
+
+const frontendDistPath = process.env.FRONTEND_DIST_PATH;
+if (frontendDistPath) {
+  const resolvedFrontendDistPath = path.resolve(frontendDistPath);
+  app.use(express.static(resolvedFrontendDistPath));
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api/")) {
+      next();
+      return;
+    }
+
+    res.sendFile(path.join(resolvedFrontendDistPath, "index.html"));
+  });
+}
 
 app.use(errorMiddleware);
 
