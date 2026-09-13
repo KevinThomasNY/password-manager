@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
 import { SECURITY_POLICY } from "../constants/security-policy";
 import { AccountStatus, UserRole } from "../constants/account-policy";
+import { VaultEncryptionVersion } from "../constants/encryption-policy";
 
 export const users = sqliteTable("users", {
   id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
@@ -22,6 +23,12 @@ export const users = sqliteTable("users", {
     .$type<AccountStatus>()
     .notNull()
     .default(AccountStatus.Active),
+  wrappedVaultKey: text("wrapped_vault_key"),
+  vaultKeySalt: text("vault_key_salt"),
+  vaultEncryptionVersion: text("vault_encryption_version")
+    .$type<VaultEncryptionVersion>()
+    .notNull()
+    .default(VaultEncryptionVersion.Legacy),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(current_timestamp)`),

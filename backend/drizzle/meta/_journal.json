@@ -15,6 +15,13 @@
       "when": 1789307654060,
       "tag": "0001_skinny_gamora",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789309720695,
+      "tag": "0002_wild_adam_warlock",
+      "breakpoints": true
     }
   ]
 }

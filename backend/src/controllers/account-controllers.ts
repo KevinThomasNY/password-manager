@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { ACCOUNT_POLICY } from "../constants/account-policy";
+import { ACCOUNT_POLICY, AccountStatus } from "../constants/account-policy";
 import * as accountModel from "../models/account-model";
+import { destroyVaultSessionsForUser } from "../services/vault-session-store";
 import { parseRouteId } from "../utils/request";
 import {
   setSensitiveResponseHeaders,
@@ -134,11 +135,15 @@ export async function updateManagedUser(
   next: NextFunction
 ) {
   try {
+    const targetUserId = parseRouteId(req.params.id);
     const user = await accountModel.updateManagedUser(
       req.user!.id,
-      parseRouteId(req.params.id),
+      targetUserId,
       req.body
     );
+    if (user.status !== AccountStatus.Active) {
+      destroyVaultSessionsForUser(targetUserId);
+    }
     successResponse({ res, message: "User updated", data: user });
   } catch (error) {
     next(error);

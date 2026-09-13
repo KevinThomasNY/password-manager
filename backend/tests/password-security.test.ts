@@ -6,7 +6,8 @@ import { db } from "../src/db/db-connection";
 import { passwords, users } from "../src/db/schema";
 import * as passwordModel from "../src/models/password-model";
 import * as userModel from "../src/models/user-model";
-import { encrypt } from "../src/utils/crypto";
+import { encryptVaultValue, unwrapVaultKey } from "../src/utils/crypto";
+import { VaultValuePurpose } from "../src/constants/encryption-policy";
 import {
   AllowedImageMimeType,
   SECURITY_POLICY,
@@ -33,8 +34,20 @@ describe("password vault security", () => {
     await userModel.addNewUser(ownerUserName, loginPassword, "Test", "Owner");
     await userModel.addNewUser(otherUserName, loginPassword, "Test", "Other");
 
-    ownerId = (await userModel.fetchUserByEmail(ownerUserName)).id;
-    otherId = (await userModel.fetchUserByEmail(otherUserName)).id;
+    const owner = await userModel.fetchUserByEmail(ownerUserName);
+    const other = await userModel.fetchUserByEmail(otherUserName);
+    ownerId = owner.id;
+    otherId = other.id;
+    const ownerVaultKey = await unwrapVaultKey(
+      owner.wrappedVaultKey!,
+      owner.vaultKeySalt!,
+      loginPassword
+    );
+    const otherVaultKey = await unwrapVaultKey(
+      other.wrappedVaultKey!,
+      other.vaultKeySalt!,
+      loginPassword
+    );
 
     ownerImageName = await storeUploadedImage({
       buffer: Buffer.from([
@@ -46,7 +59,12 @@ describe("password vault security", () => {
     ownerPasswordId = (
       await passwordModel.addPassword(
         `owner-record-${runId}`,
-        encrypt(storedPassword),
+        encryptVaultValue(
+          storedPassword,
+          ownerVaultKey,
+          ownerId,
+          VaultValuePurpose.Password
+        ),
         ownerImageName,
         ownerId
       )
@@ -54,11 +72,18 @@ describe("password vault security", () => {
     otherPasswordId = (
       await passwordModel.addPassword(
         `other-record-${runId}`,
-        encrypt("another-user-secret"),
+        encryptVaultValue(
+          "another-user-secret",
+          otherVaultKey,
+          otherId,
+          VaultValuePurpose.Password
+        ),
         undefined,
         otherId
       )
     ).id;
+    ownerVaultKey.fill(0);
+    otherVaultKey.fill(0);
   });
 
   afterAll(async () => {
@@ -111,7 +136,7 @@ describe("password vault security", () => {
     const agent = await authenticatedAgent();
     const response = await agent
       .post("/api/passwords/decrypt-password")
-      .send({ password: encrypt(storedPassword) });
+      .send({ password: "client-supplied-ciphertext" });
 
     expect(response.statusCode).toBe(400);
   });

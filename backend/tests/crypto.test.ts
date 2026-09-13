@@ -1,8 +1,18 @@
 import crypto from "crypto";
+import { VaultValuePurpose } from "../src/constants/encryption-policy";
+import {
+  createVaultKeyMaterial,
+  decryptLegacyValue,
+  decryptVaultValue,
+  encryptVaultValue,
+  unwrapVaultKey,
+} from "../src/utils/crypto";
 
-describe("password encryption", () => {
+describe("vault encryption", () => {
   const originalKey = process.env.ENCRYPTION_KEY;
   const originalIv = process.env.ENCRYPTION_IV;
+  const userId = 42;
+  const masterPassword = "LocalTestPassword123!";
 
   beforeAll(() => {
     process.env.ENCRYPTION_KEY ??= crypto.randomBytes(32).toString("hex");
@@ -14,29 +24,86 @@ describe("password encryption", () => {
     process.env.ENCRYPTION_IV = originalIv;
   });
 
-  it("uses a unique IV and decrypts authenticated ciphertext", () => {
-    const { decrypt, encrypt } = require("../src/utils/crypto");
-    const plaintext = "correct horse battery staple";
-    const first = encrypt(plaintext);
-    const second = encrypt(plaintext);
+  it("wraps a random per-user key with the master password", async () => {
+    const material = await createVaultKeyMaterial(masterPassword);
+    const unwrapped = await unwrapVaultKey(
+      material.wrappedVaultKey,
+      material.vaultKeySalt,
+      masterPassword
+    );
 
-    expect(first).toMatch(/^v2:[0-9a-f]{24}:[0-9a-f]{32}:[0-9a-f]+$/);
+    expect(unwrapped).toEqual(material.vaultKey);
+    await expect(
+      unwrapVaultKey(
+        material.wrappedVaultKey,
+        material.vaultKeySalt,
+        "wrong-password"
+      )
+    ).rejects.toThrow();
+    material.vaultKey.fill(0);
+    unwrapped.fill(0);
+  });
+
+  it("uses a unique nonce and authenticated per-user context", () => {
+    const vaultKey = crypto.randomBytes(32);
+    const plaintext = "correct horse battery staple";
+    const first = encryptVaultValue(
+      plaintext,
+      vaultKey,
+      userId,
+      VaultValuePurpose.Password
+    );
+    const second = encryptVaultValue(
+      plaintext,
+      vaultKey,
+      userId,
+      VaultValuePurpose.Password
+    );
+
+    expect(first).toMatch(/^v3:[0-9a-f]{24}:[0-9a-f]{32}:[0-9a-f]+$/);
     expect(second).not.toBe(first);
-    expect(decrypt(first)).toBe(plaintext);
-    expect(decrypt(second)).toBe(plaintext);
+    expect(
+      decryptVaultValue(
+        first,
+        vaultKey,
+        userId,
+        VaultValuePurpose.Password
+      )
+    ).toBe(plaintext);
+    expect(() =>
+      decryptVaultValue(
+        first,
+        vaultKey,
+        userId + 1,
+        VaultValuePurpose.Password
+      )
+    ).toThrow();
+    vaultKey.fill(0);
   });
 
   it("rejects ciphertext that has been modified", () => {
-    const { decrypt, encrypt } = require("../src/utils/crypto");
-    const encrypted = encrypt("sensitive value");
+    const vaultKey = crypto.randomBytes(32);
+    const encrypted = encryptVaultValue(
+      "sensitive value",
+      vaultKey,
+      userId,
+      VaultValuePurpose.Password
+    );
     const finalCharacter = encrypted.at(-1) === "0" ? "1" : "0";
     const tampered = `${encrypted.slice(0, -1)}${finalCharacter}`;
 
-    expect(() => decrypt(tampered)).toThrow();
+    expect(() =>
+      decryptVaultValue(
+        tampered,
+        vaultKey,
+        userId,
+        VaultValuePurpose.Password
+      )
+    ).toThrow();
+    vaultKey.fill(0);
   });
 
-  it("can still read legacy AES-CBC values", () => {
-    const { decrypt } = require("../src/utils/crypto");
+  it("can still read legacy AES-CBC values for migration", () => {
     const key = Buffer.from(process.env.ENCRYPTION_KEY!, "hex");
     const iv = Buffer.from(process.env.ENCRYPTION_IV!, "hex");
     const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
@@ -44,6 +111,6 @@ describe("password encryption", () => {
     let encrypted = cipher.update(plaintext, "utf8", "hex");
     encrypted += cipher.final("hex");
 
-    expect(decrypt(encrypted)).toBe(plaintext);
+    expect(decryptLegacyValue(encrypted)).toBe(plaintext);
   });
 });

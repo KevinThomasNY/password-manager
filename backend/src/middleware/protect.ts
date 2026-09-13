@@ -5,6 +5,7 @@ import * as userModel from "../models/user-model";
 import { StatusCodes } from "../utils/status-codes";
 import { AccountStatus, UserRole } from "../constants/account-policy";
 import { ForbiddenError } from "./error-middleware";
+import { getVaultSession } from "../services/vault-session-store";
 
 const protect = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -17,6 +18,16 @@ const protect = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const decoded = jwt.verify(token, process.env.SECRET_KEY!) as JwtPayload;
+    if (typeof decoded.id !== "number" || typeof decoded.sessionId !== "string") {
+      throw new Error("Invalid token payload");
+    }
+
+    const vaultKey = getVaultSession(decoded.sessionId, decoded.id);
+    if (!vaultKey) {
+      return next(
+        new AppError("Invalid or expired token", StatusCodes.UNAUTHORIZED)
+      );
+    }
 
     const user = await userModel.fetchUserById(decoded.id);
 
@@ -31,6 +42,8 @@ const protect = async (req: Request, res: Response, next: NextFunction) => {
       username: user.userName,
       role: user.role,
       status: user.status,
+      sessionId: decoded.sessionId,
+      vaultKey,
     };
     next();
   } catch (error) {

@@ -8,6 +8,7 @@ import {
   UserRole,
 } from "../constants/account-policy";
 import { SECURITY_POLICY } from "../constants/security-policy";
+import { VaultEncryptionVersion } from "../constants/encryption-policy";
 import { db } from "../db/db-connection";
 import { invitations, users } from "../db/schema";
 import {
@@ -16,6 +17,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "../middleware/error-middleware";
+import { createVaultKeyMaterial } from "../utils/crypto";
 
 export interface NewAccountInput {
   userName: string;
@@ -42,36 +44,46 @@ export async function isSetupRequired(): Promise<boolean> {
 }
 
 export async function createInitialAdmin(input: NewAccountInput) {
-  const passwordHash = await createPasswordHash(input.password);
+  const [passwordHash, vault] = await Promise.all([
+    createPasswordHash(input.password),
+    createVaultKeyMaterial(input.password),
+  ]);
 
-  return db.transaction((transaction) => {
-    const [existingUser] = transaction
-      .select({ id: users.id })
-      .from(users)
-      .limit(1)
-      .all();
-    if (existingUser) {
-      throw new ConflictError("Initial setup has already been completed");
-    }
+  try {
+    return db.transaction((transaction) => {
+      const [existingUser] = transaction
+        .select({ id: users.id })
+        .from(users)
+        .limit(1)
+        .all();
+      if (existingUser) {
+        throw new ConflictError("Initial setup has already been completed");
+      }
 
-    const [admin] = transaction
-      .insert(users)
-      .values({
-        ...input,
-        password: passwordHash,
-        role: UserRole.Admin,
-        status: AccountStatus.Active,
-      })
-      .returning({
-        id: users.id,
-        userName: users.userName,
-        role: users.role,
-        status: users.status,
-      })
-      .all();
+      const [admin] = transaction
+        .insert(users)
+        .values({
+          ...input,
+          password: passwordHash,
+          role: UserRole.Admin,
+          status: AccountStatus.Active,
+          wrappedVaultKey: vault.wrappedVaultKey,
+          vaultKeySalt: vault.vaultKeySalt,
+          vaultEncryptionVersion: VaultEncryptionVersion.EnvelopeV1,
+        })
+        .returning({
+          id: users.id,
+          userName: users.userName,
+          role: users.role,
+          status: users.status,
+        })
+        .all();
 
-    return admin;
-  });
+      return admin;
+    });
+  } finally {
+    vault.vaultKey.fill(0);
+  }
 }
 
 export async function createInvitation(
@@ -101,63 +113,73 @@ export async function consumeInvitation(
   token: string,
   input: NewAccountInput
 ) {
-  const passwordHash = await createPasswordHash(input.password);
+  const [passwordHash, vault] = await Promise.all([
+    createPasswordHash(input.password),
+    createVaultKeyMaterial(input.password),
+  ]);
   const tokenHash = hashInvitationToken(token);
   const now = new Date();
   const nowIso = now.toISOString();
 
-  return db.transaction((transaction) => {
-    const [invitation] = transaction
-      .select()
-      .from(invitations)
-      .where(
-        and(
-          eq(invitations.tokenHash, tokenHash),
-          isNull(invitations.consumedAt),
-          isNull(invitations.revokedAt)
+  try {
+    return db.transaction((transaction) => {
+      const [invitation] = transaction
+        .select()
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.tokenHash, tokenHash),
+            isNull(invitations.consumedAt),
+            isNull(invitations.revokedAt)
+          )
         )
-      )
-      .limit(1)
-      .all();
+        .limit(1)
+        .all();
 
-    if (!invitation || new Date(invitation.expiresAt) <= now) {
-      throw invitationFailure();
-    }
+      if (!invitation || new Date(invitation.expiresAt) <= now) {
+        throw invitationFailure();
+      }
 
-    const [existingUser] = transaction
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.userName, input.userName))
-      .limit(1)
-      .all();
-    if (existingUser) {
-      throw new ConflictError("Username is unavailable");
-    }
+      const [existingUser] = transaction
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.userName, input.userName))
+        .limit(1)
+        .all();
+      if (existingUser) {
+        throw new ConflictError("Username is unavailable");
+      }
 
-    const [user] = transaction
-      .insert(users)
-      .values({
-        ...input,
-        password: passwordHash,
-        role: UserRole.User,
-        status: AccountStatus.Active,
-      })
-      .returning({
-        id: users.id,
-        userName: users.userName,
-        role: users.role,
-        status: users.status,
-      })
-      .all();
+      const [user] = transaction
+        .insert(users)
+        .values({
+          ...input,
+          password: passwordHash,
+          role: UserRole.User,
+          status: AccountStatus.Active,
+          wrappedVaultKey: vault.wrappedVaultKey,
+          vaultKeySalt: vault.vaultKeySalt,
+          vaultEncryptionVersion: VaultEncryptionVersion.EnvelopeV1,
+        })
+        .returning({
+          id: users.id,
+          userName: users.userName,
+          role: users.role,
+          status: users.status,
+        })
+        .all();
 
-    transaction
-      .update(invitations)
-      .set({ consumedAt: nowIso, consumedByUserId: user.id })
-      .where(eq(invitations.id, invitation.id))
-      .run();
+      transaction
+        .update(invitations)
+        .set({ consumedAt: nowIso, consumedByUserId: user.id })
+        .where(eq(invitations.id, invitation.id))
+        .run();
 
-    return user;
-  });
+      return user;
+    });
+  } finally {
+    vault.vaultKey.fill(0);
+  }
 }
 
 export async function listInvitations() {
@@ -300,7 +322,10 @@ export async function promoteUserForRecovery(userName: string) {
 }
 
 export async function createRecoveryAdmin(input: NewAccountInput) {
-  const passwordHash = await createPasswordHash(input.password);
+  const [passwordHash, vault] = await Promise.all([
+    createPasswordHash(input.password),
+    createVaultKeyMaterial(input.password),
+  ]);
   const [existingUser] = await db
     .select({ id: users.id })
     .from(users)
@@ -309,14 +334,21 @@ export async function createRecoveryAdmin(input: NewAccountInput) {
     throw new ConflictError("Username is unavailable");
   }
 
-  const [admin] = await db
-    .insert(users)
-    .values({
-      ...input,
-      password: passwordHash,
-      role: UserRole.Admin,
-      status: AccountStatus.Active,
-    })
-    .returning({ id: users.id, userName: users.userName });
-  return admin;
+  try {
+    const [admin] = await db
+      .insert(users)
+      .values({
+        ...input,
+        password: passwordHash,
+        role: UserRole.Admin,
+        status: AccountStatus.Active,
+        wrappedVaultKey: vault.wrappedVaultKey,
+        vaultKeySalt: vault.vaultKeySalt,
+        vaultEncryptionVersion: VaultEncryptionVersion.EnvelopeV1,
+      })
+      .returning({ id: users.id, userName: users.userName });
+    return admin;
+  } finally {
+    vault.vaultKey.fill(0);
+  }
 }

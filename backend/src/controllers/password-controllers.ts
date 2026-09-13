@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import fs from "fs";
 import logger from "../utils/logger";
-import { encrypt, decrypt } from "../utils/crypto";
+import { decryptVaultValue, encryptVaultValue } from "../utils/crypto";
 import * as passwordModel from "../models/password-model";
 import * as userModel from "../models/user-model";
 import {
@@ -24,6 +24,7 @@ import {
 } from "../utils/file-storage";
 import { parseRouteId } from "../utils/request";
 import { StatusCodes } from "../utils/status-codes";
+import { VaultValuePurpose } from "../constants/encryption-policy";
 
 async function removeImageSafely(imagePath: string): Promise<void> {
   try {
@@ -99,7 +100,12 @@ export const createPassword = async (
       throw new ValidationError("Password with this name already exists");
     }
     imagePath = file ? await storeUploadedImage(file) : undefined;
-    const encryptedPassword = encrypt(password);
+    const encryptedPassword = encryptVaultValue(
+      password,
+      req.user!.vaultKey,
+      user_id,
+      VaultValuePurpose.Password
+    );
     const newPassword = await passwordModel.addPassword(
       name,
       encryptedPassword,
@@ -114,7 +120,12 @@ export const createPassword = async (
       const encryptedQuestions = questions.map(
         (q: { question: string; answer: string }) => ({
           question: q.question,
-          answer: encrypt(q.answer),
+          answer: encryptVaultValue(
+            q.answer,
+            req.user!.vaultKey,
+            user_id,
+            VaultValuePurpose.SecurityAnswer
+          ),
         })
       );
 
@@ -147,7 +158,8 @@ export const getSecurityQuestions = async (
     const userId = req.user?.id!;
     const questions = await passwordModel.getSecurityQuestions(
       passwordId,
-      userId
+      userId,
+      req.user!.vaultKey
     );
 
     successResponse({
@@ -230,7 +242,12 @@ export const editPassword = async (
     }
 
     imagePath = file ? await storeUploadedImage(file) : undefined;
-    const encryptedPassword = encrypt(password);
+    const encryptedPassword = encryptVaultValue(
+      password,
+      req.user!.vaultKey,
+      userId,
+      VaultValuePurpose.Password
+    );
 
     const updateData: { name: string; password: string; image?: string } = {
       name,
@@ -269,7 +286,12 @@ export const editPassword = async (
       const encryptedQuestions = questions.map(
         (q: { question: string; answer: string }) => ({
           question: q.question,
-          answer: encrypt(q.answer),
+          answer: encryptVaultValue(
+            q.answer,
+            req.user!.vaultKey,
+            userId,
+            VaultValuePurpose.SecurityAnswer
+          ),
         })
       );
 
@@ -387,7 +409,12 @@ export const decryptPassword = async (
       throw new NotFoundError("Password not found");
     }
 
-    const decrypted = decrypt(passwordRecord.password);
+    const decrypted = decryptVaultValue(
+      passwordRecord.password,
+      request.user!.vaultKey,
+      userId,
+      VaultValuePurpose.Password
+    );
     logger.debug(`Password decrypted for record ID: ${id}`);
 
     successResponse({
@@ -412,18 +439,18 @@ export const exportPasswordsJson = async (
 
     const user = await userModel.fetchUserById(userId);
     await userModel.comparePassword(currentPassword, user.password);
-    
+
     logger.debug(`Exporting passwords for user ID: ${userId}`);
-    
+
     const passwords = await passwordModel.getPasswords(
       userId,
       SECURITY_POLICY.FIRST_PAGE,
       SECURITY_POLICY.MAX_PASSWORDS_PER_USER,
       undefined
     );
-    
+
     logger.debug(`Found ${passwords.data.length} passwords to export`);
-    
+
     const passwordsWithQuestions = await Promise.all(
       passwords.data.map(async (password) => {
         logger.debug(`Processing password ID: ${password.id}`);
@@ -436,44 +463,53 @@ export const exportPasswordsJson = async (
         if (!passwordRecord) {
           throw new NotFoundError("Password not found");
         }
-        
-        const questions = await passwordModel.getSecurityQuestions(
-          password.id,
-          userId
-        ) || [];
-        
-        logger.debug(`Found ${questions.length} security questions for password ID: ${password.id}`);
-        
-        const decryptedQuestions = Array.isArray(questions) ? 
-          questions.map(q => ({
-            question: q.question,
-            answer: q.answer
-          })) : [];
-        
+
+        const questions =
+          (await passwordModel.getSecurityQuestions(
+            password.id,
+            userId,
+            req.user!.vaultKey
+          )) || [];
+
+        logger.debug(
+          `Found ${questions.length} security questions for password ID: ${password.id}`
+        );
+
+        const decryptedQuestions = Array.isArray(questions)
+          ? questions.map((question) => ({
+              question: question.question,
+              answer: question.answer,
+            }))
+          : [];
+
         return {
           id: password.id,
           name: password.name,
-          password: decrypt(passwordRecord.password),
+          password: decryptVaultValue(
+            passwordRecord.password,
+            req.user!.vaultKey,
+            userId,
+            VaultValuePurpose.Password
+          ),
           securityQuestions: decryptedQuestions,
           createdAt: password.createdAt,
-          updatedAt: password.updatedAt
+          updatedAt: password.updatedAt,
         };
       })
     );
-    
-    logger.debug('Finished processing passwords for export');
-    
+
+    logger.debug("Finished processing passwords for export");
+
     setSensitiveResponseHeaders(res);
     res.setHeader("Content-Type", "application/json");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="${EXPORT_FILE_NAME}"`
     );
-    
+
     res.status(StatusCodes.OK).json(passwordsWithQuestions);
-    
   } catch (error) {
-    logger.error('Error exporting passwords to JSON:', error);
+    logger.error("Error exporting passwords to JSON:", error);
     next(error);
   }
 };

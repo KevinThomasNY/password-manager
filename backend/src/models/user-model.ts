@@ -11,6 +11,8 @@ import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
 import { currentTimeStamp } from "../utils/helpers";
 import { SECURITY_POLICY } from "../constants/security-policy";
+import { VaultEncryptionVersion } from "../constants/encryption-policy";
+import { createVaultKeyMaterial, wrapVaultKey } from "../utils/crypto";
 
 export async function addNewUser(
   userName: string,
@@ -31,23 +33,29 @@ export async function addNewUser(
       throw new ValidationError("Username already exists");
     }
 
-    const hashedPassword = await bcrypt.hash(
-      password,
-      SECURITY_POLICY.BCRYPT_SALT_ROUNDS
-    );
-    const [user] = await db
-      .insert(users)
-      .values({
-        userName,
-        password: hashedPassword,
-        firstName,
-        lastName,
-      })
-      .returning({
-        userName: users.userName,
-      });
-
-    return user;
+    const [hashedPassword, vault] = await Promise.all([
+      bcrypt.hash(password, SECURITY_POLICY.BCRYPT_SALT_ROUNDS),
+      createVaultKeyMaterial(password),
+    ]);
+    try {
+      const [user] = await db
+        .insert(users)
+        .values({
+          userName,
+          password: hashedPassword,
+          firstName,
+          lastName,
+          wrappedVaultKey: vault.wrappedVaultKey,
+          vaultKeySalt: vault.vaultKeySalt,
+          vaultEncryptionVersion: VaultEncryptionVersion.EnvelopeV1,
+        })
+        .returning({
+          userName: users.userName,
+        });
+      return user;
+    } finally {
+      vault.vaultKey.fill(0);
+    }
   } catch (error) {
     logger.error(`Error adding user: ${error}`);
     throw new AppError("Error adding user", StatusCodes.INTERNAL_SERVER_ERROR);
@@ -98,7 +106,8 @@ export async function updateUserProfile(
 export async function updateUserPassword(
   userId: string,
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
+  vaultKey: Buffer
 ) {
   logger.debug(`Updating password for user: userId=${userId}`);
   try {
@@ -128,16 +137,19 @@ export async function updateUserPassword(
       );
     }
 
-    const hashedPassword = await bcrypt.hash(
-      newPassword,
-      SECURITY_POLICY.BCRYPT_SALT_ROUNDS
-    );
+    const [hashedPassword, wrappedVault] = await Promise.all([
+      bcrypt.hash(newPassword, SECURITY_POLICY.BCRYPT_SALT_ROUNDS),
+      wrapVaultKey(vaultKey, newPassword),
+    ]);
     const time = currentTimeStamp();
 
     const [updatedUser] = await db
       .update(users)
       .set({
         password: hashedPassword,
+        wrappedVaultKey: wrappedVault.wrappedVaultKey,
+        vaultKeySalt: wrappedVault.vaultKeySalt,
+        vaultEncryptionVersion: VaultEncryptionVersion.EnvelopeV1,
         updatedAt: time,
       })
       .where(eq(users.id, numUserId))

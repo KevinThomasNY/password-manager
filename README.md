@@ -77,14 +77,25 @@ are stored in a persistent Docker volume.
 ```bash
 cp .env.example .env
 openssl rand -hex 32 # use as SECRET_KEY
-openssl rand -hex 32 # use as ENCRYPTION_KEY
-# Add both generated values to .env, then start the app:
+# Add the generated value to .env, then start the app:
 docker compose up --build -d
 ```
 
 Open `http://localhost:3000` for local testing. On an Ubuntu server, keep the
 container bound to `127.0.0.1` and put Caddy or another HTTPS reverse proxy in
 front of it before allowing other devices to connect.
+
+Each account has a random vault key protected by its master password using
+Argon2id and AES-256-GCM. Unlocked keys exist only in the server's in-memory
+session store, so restarting the container signs everyone out. There is no
+administrator or recovery key that can decrypt another user's vault.
+
+For an existing installation, retain its original `ENCRYPTION_KEY` (and
+`ENCRYPTION_IV` if it used the oldest format). A user's legacy records are
+migrated atomically to their per-user key on their next successful login. Back
+up the Docker volume before upgrading, and do not remove the legacy values until
+every existing user has logged in after the upgrade. Fresh installations leave
+both legacy variables blank.
 
 Useful commands:
 

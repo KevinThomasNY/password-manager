@@ -9,6 +9,8 @@ declare global {
         username: string;
         role: UserRole;
         status: AccountStatus;
+        sessionId: string;
+        vaultKey: Buffer;
       };
     }
   }

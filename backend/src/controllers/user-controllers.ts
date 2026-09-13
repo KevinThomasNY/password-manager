@@ -6,6 +6,12 @@ import { UnauthorizedError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
 import { ACCOUNT_POLICY, AccountStatus } from "../constants/account-policy";
+import { unlockUserVault } from "../services/vault-service";
+import {
+  createVaultSession,
+  destroyVaultSession,
+  destroyVaultSessionsForUser,
+} from "../services/vault-session-store";
 
 export const editUser = async (
   req: Request,
@@ -27,8 +33,10 @@ export const editUser = async (
       updatedUser = await userModel.updateUserPassword(
         id,
         req.body.currentPassword,
-        req.body.newPassword
+        req.body.newPassword,
+        req.user!.vaultKey
       );
+      destroyVaultSessionsForUser(req.user!.id, req.user!.sessionId);
       message = "Password updated successfully";
       logger.info(`Password updated successfully for user ${id}`);
     } else {
@@ -66,24 +74,42 @@ export const loginUser = async (
       throw new UnauthorizedError("Invalid username or password");
     }
     await userModel.comparePassword(password, user.password);
-    const token = jwt.sign(
-      { id: user.id, username: user.userName },
-      process.env.SECRET_KEY!,
-      {
-        expiresIn: ACCOUNT_POLICY.SESSION_DURATION_SECONDS,
-      }
-    );
+    const vaultKey = await unlockUserVault(user, password);
+    const ipAddress =
+      (req.headers["x-forwarded-for"]?.toString().split(",")[0] || req.ip) ??
+      "unknown";
+    try {
+      await userModel.insertLoginHistory(user.id, ipAddress);
+    } catch (error) {
+      vaultKey.fill(0);
+      throw error;
+    }
+
+    let sessionId: string;
+    try {
+      sessionId = createVaultSession(user.id, vaultKey);
+    } finally {
+      vaultKey.fill(0);
+    }
+    let token: string;
+    try {
+      token = jwt.sign(
+        { id: user.id, username: user.userName, sessionId },
+        process.env.SECRET_KEY!,
+        {
+          expiresIn: ACCOUNT_POLICY.SESSION_DURATION_SECONDS,
+        }
+      );
+    } catch (error) {
+      destroyVaultSession(sessionId);
+      throw error;
+    }
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: ACCOUNT_POLICY.SESSION_DURATION_SECONDS * 1000,
     });
-    const ipAddress =
-      (req.headers["x-forwarded-for"]?.toString().split(",")[0] || req.ip) ??
-      "unknown";
-
-    await userModel.insertLoginHistory(user.id, ipAddress);
     successResponse({
       res,
       message: "User logged in Successfully",
@@ -99,6 +125,17 @@ export const loginUser = async (
 };
 
 export const logoutUser = async (req: Request, res: Response) => {
+  const token = req.cookies.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.SECRET_KEY!);
+      if (typeof decoded !== "string" && typeof decoded.sessionId === "string") {
+        destroyVaultSession(decoded.sessionId);
+      }
+    } catch {
+      // The cookie is cleared even when it is already invalid or expired.
+    }
+  }
   res.cookie("token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

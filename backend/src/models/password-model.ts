@@ -6,7 +6,8 @@ import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
 import { eq, and, sql, count, like } from "drizzle-orm";
 import { currentTimeStamp } from "../utils/helpers";
-import { decrypt } from "../utils/crypto";
+import { decryptVaultValue } from "../utils/crypto";
+import { VaultValuePurpose } from "../constants/encryption-policy";
 import {
   PasswordCharacterSet,
   SECURITY_POLICY,
@@ -323,7 +324,11 @@ export async function deletePasswordById(passwordId: number) {
   }
 }
 
-export async function getSecurityQuestions(passwordId: number, userId: number) {
+export async function getSecurityQuestions(
+  passwordId: number,
+  userId: number,
+  vaultKey: Buffer
+) {
   logger.debug(
     `Fetching security questions for password ID: ${passwordId} by user ID: ${userId}`
   );
@@ -348,7 +353,12 @@ export async function getSecurityQuestions(passwordId: number, userId: number) {
 
     const decryptedQuestion = questions.map((q) => ({
       question: q.question,
-      answer: decrypt(q.answer),
+      answer: decryptVaultValue(
+        q.answer,
+        vaultKey,
+        userId,
+        VaultValuePurpose.SecurityAnswer
+      ),
     }));
     return decryptedQuestion;
   } catch (error) {
