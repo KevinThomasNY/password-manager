@@ -29,6 +29,9 @@ import { post } from "@/api/axios-instance";
 import GeneratePassword from "./GeneratePassword";
 import EditGeneratePassword from "./EditGeneratePassword";
 import { usePasswordGeneratorStore } from "@/store/passwordGeneratorStore";
+import { AllowedImageMimeType } from "../../../backend/src/constants/security-policy";
+
+const acceptedImageTypes = Object.values(AllowedImageMimeType).join(",");
 
 interface EditPasswordProps {
   id: number;
@@ -200,15 +203,16 @@ const EditPassword = ({
                       {image && (
                         <div className="mb-2">
                           <img
-                            src={`${import.meta.env.VITE_BASE_URL}${image}`}
+                            src={`${import.meta.env.VITE_API_BASE_URL}/passwords/${id}/image`}
                             alt={name}
                             className="w-xl object-cover rounded"
                           />
                         </div>
                       )}
                       <FormControl>
-                        <Input
-                          type="file"
+                      <Input
+                        type="file"
+                        accept={acceptedImageTypes}
                           onChange={(e) => field.onChange(e.target.files?.[0])}
                         />
                       </FormControl>

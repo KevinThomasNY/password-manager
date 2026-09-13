@@ -2,10 +2,15 @@ import { db } from "../db/db-connection";
 import { users, userLoginHistory } from "../db/schema";
 import { eq, desc } from "drizzle-orm";
 import bcrypt from "bcrypt";
-import { AppError, ValidationError } from "../middleware/error-middleware";
+import {
+  AppError,
+  UnauthorizedError,
+  ValidationError,
+} from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
 import { currentTimeStamp } from "../utils/helpers";
+import { SECURITY_POLICY } from "../constants/security-policy";
 
 export async function addNewUser(
   userName: string,
@@ -26,8 +31,10 @@ export async function addNewUser(
       throw new ValidationError("Username already exists");
     }
 
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(
+      password,
+      SECURITY_POLICY.BCRYPT_SALT_ROUNDS
+    );
     const [user] = await db
       .insert(users)
       .values({
@@ -121,8 +128,10 @@ export async function updateUserPassword(
       );
     }
 
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    const hashedPassword = await bcrypt.hash(
+      newPassword,
+      SECURITY_POLICY.BCRYPT_SALT_ROUNDS
+    );
     const time = currentTimeStamp();
 
     const [updatedUser] = await db
@@ -149,15 +158,13 @@ export async function updateUserPassword(
 
 export async function fetchUserByEmail(userName: string) {
   logger.debug(`Fetching user by email: userName=${userName}`);
+  let user;
+
   try {
-    const [user] = await db
+    [user] = await db
       .select()
       .from(users)
       .where(eq(users.userName, userName));
-    if (!user) {
-      throw new ValidationError("User not found");
-    }
-    return user;
   } catch (error) {
     logger.error(`Error fetching user: ${error}`);
     throw new AppError(
@@ -165,6 +172,12 @@ export async function fetchUserByEmail(userName: string) {
       StatusCodes.INTERNAL_SERVER_ERROR
     );
   }
+
+  if (!user) {
+    throw new UnauthorizedError("Invalid username or password");
+  }
+
+  return user;
 }
 
 export async function comparePassword(
@@ -172,17 +185,20 @@ export async function comparePassword(
   hashedPassword: string
 ) {
   logger.debug(`Comparing password`);
+  let match: boolean;
+
   try {
-    const match = await bcrypt.compare(plainPassword, hashedPassword);
-    if (!match) {
-      throw new ValidationError("Invalid password");
-    }
+    match = await bcrypt.compare(plainPassword, hashedPassword);
   } catch (error) {
     logger.error(`Error comparing password: ${error}`);
     throw new AppError(
       "Error comparing password",
       StatusCodes.INTERNAL_SERVER_ERROR
     );
+  }
+
+  if (!match) {
+    throw new UnauthorizedError("Invalid username or password");
   }
 }
 

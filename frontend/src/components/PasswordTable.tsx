@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import AddPassword from "./AddPassword";
 import DeleteDialog from "./DeleteDialog";
+import ExportPasswords from "./ExportPasswords";
 import {
   Table,
   TableBody,
@@ -27,7 +28,6 @@ import {
   ChevronLast,
   ChevronLeft,
   ChevronRight,
-  Download,
 } from "lucide-react";
 
 const PasswordTable = () => {
@@ -52,12 +52,6 @@ const PasswordTable = () => {
     const value = e.target.value;
     setInputValue(value);
     debouncedSetSearch(value);
-  };
-
-  const handleExportJSON = () => {
-    window.location.href = `${
-      import.meta.env.VITE_API_BASE_URL
-    }/passwords/export/json`;
   };
 
   useEffect(() => {
@@ -122,16 +116,7 @@ const PasswordTable = () => {
         />
 
         <div className="flex flex-wrap gap-2 sm:ml-auto">
-          <Button
-            type="button"
-            onClick={handleExportJSON}
-            variant="outline"
-            disabled={!data || data.data.length === 0}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1"
-          >
-            <Download size={16} />
-            Export
-          </Button>
+          <ExportPasswords disabled={!data || data.data.length === 0} />
           <Button
             type="button"
             onClick={() => setIsDeleteDialogOpen(true)}

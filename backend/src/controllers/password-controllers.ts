@@ -1,15 +1,37 @@
 import { Request, Response, NextFunction } from "express";
 import fs from "fs";
-import path from "path";
 import logger from "../utils/logger";
 import { encrypt, decrypt } from "../utils/crypto";
 import * as passwordModel from "../models/password-model";
-import { successResponse } from "../utils/response";
+import * as userModel from "../models/user-model";
+import {
+  setSensitiveResponseHeaders,
+  successResponse,
+} from "../utils/response";
 import {
   NotFoundError,
   UnauthorizedError,
   ValidationError,
 } from "../middleware/error-middleware";
+import {
+  EXPORT_FILE_NAME,
+  SECURITY_POLICY,
+} from "../constants/security-policy";
+import {
+  removeStoredImage,
+  resolveStoredImagePath,
+  storeUploadedImage,
+} from "../utils/file-storage";
+import { parseRouteId } from "../utils/request";
+import { StatusCodes } from "../utils/status-codes";
+
+async function removeImageSafely(imagePath: string): Promise<void> {
+  try {
+    await removeStoredImage(imagePath);
+  } catch (error) {
+    logger.error(`Unable to remove image: ${error}`);
+  }
+}
 
 export const getPassword = async (
   req: Request,
@@ -42,18 +64,17 @@ export const createPassword = async (
   next: NextFunction
 ) => {
   const { name, password, questions } = req.body;
-
   const file = req.file;
-
-  const imagePath = file ? `/uploads/${file.filename}` : undefined;
+  let imagePath: string | undefined;
+  let passwordRecordCreated = false;
 
   logger.debug(
-    `createPassword: name=${name}, image=${imagePath}, questionCount=${questions?.length ?? 0}`
+    `createPassword: name=${name}, hasImage=${Boolean(file)}, questionCount=${questions?.length ?? 0}`
   );
 
   try {
     const totalPasswords = await passwordModel.getPasswordCount(req.user?.id!);
-    if (totalPasswords >= 300) {
+    if (totalPasswords >= SECURITY_POLICY.MAX_PASSWORDS_PER_USER) {
       throw new ValidationError(
         "You have reached the maximum number of passwords allowed."
       );
@@ -77,6 +98,7 @@ export const createPassword = async (
     if (passwordExists) {
       throw new ValidationError("Password with this name already exists");
     }
+    imagePath = file ? await storeUploadedImage(file) : undefined;
     const encryptedPassword = encrypt(password);
     const newPassword = await passwordModel.addPassword(
       name,
@@ -84,6 +106,7 @@ export const createPassword = async (
       imagePath,
       user_id
     );
+    passwordRecordCreated = true;
     logger.info(
       `Password created successfully: ${JSON.stringify(newPassword)}`
     );
@@ -106,6 +129,9 @@ export const createPassword = async (
       data: newPassword,
     });
   } catch (error) {
+    if (imagePath && !passwordRecordCreated) {
+      await removeImageSafely(imagePath);
+    }
     next(error);
   }
 };
@@ -116,8 +142,7 @@ export const getSecurityQuestions = async (
   next: NextFunction
 ) => {
   try {
-    const id = Array.isArray(req.params.id) ? "" : req.params.id;
-    const passwordId = parseInt(id, 10);
+    const passwordId = parseRouteId(req.params.id);
     logger.debug(`getSecurityQuestions: passwordId=${passwordId}`);
     const userId = req.user?.id!;
     const questions = await passwordModel.getSecurityQuestions(
@@ -135,21 +160,48 @@ export const getSecurityQuestions = async (
   }
 };
 
+export const getPasswordImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const passwordId = parseRouteId(req.params.id);
+    const passwordRecord = await passwordModel.getPasswordById(
+      passwordId,
+      req.user?.id!
+    );
+
+    if (!passwordRecord?.image) {
+      throw new NotFoundError("Image not found");
+    }
+
+    const imagePath = resolveStoredImagePath(passwordRecord.image);
+    if (!fs.existsSync(imagePath)) {
+      throw new NotFoundError("Image not found");
+    }
+
+    setSensitiveResponseHeaders(res);
+    res.sendFile(imagePath);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const editPassword = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const id = Array.isArray(req.params.id) ? "" : req.params.id;
-  const passwordId = parseInt(id, 10);
+  const passwordId = parseRouteId(req.params.id);
 
   const { name, password, questions } = req.body;
   const file = req.file;
-
-  const imagePath = file ? `/uploads/${file.filename}` : undefined;
+  let imagePath: string | undefined;
+  let passwordRecordUpdated = false;
 
   logger.debug(
-    `editPassword: id=${passwordId}, name=${name}, image=${imagePath}, questionCount=${questions?.length ?? 0}`
+    `editPassword: id=${passwordId}, name=${name}, hasImage=${Boolean(file)}, questionCount=${questions?.length ?? 0}`
   );
 
   try {
@@ -177,18 +229,8 @@ export const editPassword = async (
       }
     }
 
+    imagePath = file ? await storeUploadedImage(file) : undefined;
     const encryptedPassword = encrypt(password);
-
-    if (imagePath && existingPassword.image) {
-      const oldImagePath = path.join(__dirname, "..", existingPassword.image);
-      fs.unlink(oldImagePath, (err) => {
-        if (err) {
-          logger.error("Error removing old image: ", err);
-        } else {
-          logger.info("Old image removed successfully");
-        }
-      });
-    }
 
     const updateData: { name: string; password: string; image?: string } = {
       name,
@@ -202,6 +244,11 @@ export const editPassword = async (
       passwordId,
       updateData
     );
+    passwordRecordUpdated = true;
+
+    if (imagePath && existingPassword.image) {
+      await removeImageSafely(existingPassword.image);
+    }
 
     logger.info(
       `Password updated successfully: ${JSON.stringify(updatedPassword)}`
@@ -235,6 +282,9 @@ export const editPassword = async (
       data: updatedPassword,
     });
   } catch (error) {
+    if (imagePath && !passwordRecordUpdated) {
+      await removeImageSafely(imagePath);
+    }
     next(error);
   }
 };
@@ -306,17 +356,7 @@ export const deletePasswordsBulk = async (
       }
 
       if (password.image) {
-        const relativePath = password.image.startsWith("/")
-          ? password.image.slice(1)
-          : password.image;
-        const absolutePath = path.join(__dirname, "..", relativePath);
-
-        try {
-          fs.unlinkSync(absolutePath);
-          logger.debug(`Image file for password id ${passwordId} deleted successfully.`);
-        } catch (err) {
-          logger.error(`Error deleting image file for password id ${passwordId}:`, err);
-        }
+        await removeImageSafely(password.image);
       }
 
       const data = await passwordModel.deletePasswordById(passwordId);
@@ -368,13 +408,17 @@ export const exportPasswordsJson = async (
 ) => {
   try {
     const userId = req.user?.id!;
+    const { currentPassword } = req.body;
+
+    const user = await userModel.fetchUserById(userId);
+    await userModel.comparePassword(currentPassword, user.password);
     
     logger.debug(`Exporting passwords for user ID: ${userId}`);
     
     const passwords = await passwordModel.getPasswords(
       userId,
-      1,
-      10000,
+      SECURITY_POLICY.FIRST_PAGE,
+      SECURITY_POLICY.MAX_PASSWORDS_PER_USER,
       undefined
     );
     
@@ -419,10 +463,14 @@ export const exportPasswordsJson = async (
     
     logger.debug('Finished processing passwords for export');
     
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', 'attachment; filename="passwords-export.json"');
+    setSensitiveResponseHeaders(res);
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${EXPORT_FILE_NAME}"`
+    );
     
-    res.status(200).json(passwordsWithQuestions);
+    res.status(StatusCodes.OK).json(passwordsWithQuestions);
     
   } catch (error) {
     logger.error('Error exporting passwords to JSON:', error);

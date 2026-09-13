@@ -1,4 +1,10 @@
-import { get, post, patch, del, ApiResponse } from "./axios-instance";
+import axiosInstance, {
+  get,
+  post,
+  patch,
+  del,
+  ApiResponse,
+} from "./axios-instance";
 
 export interface Password {
   id: number;
@@ -128,4 +134,15 @@ export const editPassword = async (
     console.error("Error editing password", error);
     throw new Error("Failed to edit password");
   }
+};
+
+export const exportPasswords = async (
+  currentPassword: string
+): Promise<Blob> => {
+  const response = await axiosInstance.post(
+    "/passwords/export/json",
+    { currentPassword },
+    { responseType: "blob" }
+  );
+  return response.data;
 };

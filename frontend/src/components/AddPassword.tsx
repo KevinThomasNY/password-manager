@@ -30,6 +30,9 @@ import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addPassword } from "@/api/password-api";
 import { usePasswordGeneratorStore } from "@/store/passwordGeneratorStore";
+import { AllowedImageMimeType } from "../../../backend/src/constants/security-policy";
+
+const acceptedImageTypes = Object.values(AllowedImageMimeType).join(",");
 
 const AddPassword = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -160,6 +163,7 @@ const AddPassword = () => {
                   <FormControl>
                     <Input
                       type="file"
+                      accept={acceptedImageTypes}
                       onChange={(e) => {
                         field.onChange(e.target.files?.[0]);
                       }}

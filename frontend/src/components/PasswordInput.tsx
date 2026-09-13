@@ -6,12 +6,14 @@ interface PasswordInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  autoComplete?: "current-password" | "new-password" | "off";
 }
 
 export default function PasswordInput({
   value,
   onChange,
   placeholder = "Password",
+  autoComplete = "off",
 }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -20,6 +22,7 @@ export default function PasswordInput({
       <Input
         type={showPassword ? "text" : "password"}
         value={value}
+        autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full pr-12 py-4 rounded-md border border-gray-300 

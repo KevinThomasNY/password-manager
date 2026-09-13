@@ -3,6 +3,7 @@ import {
   createPassword,
   editPassword,
   generatePassword,
+  getPasswordImage,
   getPassword,
   decryptPassword,
   getSecurityQuestions,
@@ -14,9 +15,11 @@ import { validateRequest } from "../middleware/error-middleware";
 import {
   createPasswordSchema,
   decryptPasswordSchema,
+  exportPasswordsSchema,
   generatePasswordSchema,
 } from "../validation/password-validation";
 import { upload } from "../utils/file-storage"
+import { IMAGE_UPLOAD_FIELD_NAME } from "../constants/security-policy";
 
 const router = Router();
 
@@ -30,15 +33,16 @@ router.post(
 router.post(
   "/",
   protect,
-  upload.single("image"),
+  upload.single(IMAGE_UPLOAD_FIELD_NAME),
   validateRequest(createPasswordSchema),
   createPassword
 );
 router.get("/:id/questions", protect, getSecurityQuestions);
+router.get("/:id/image", protect, getPasswordImage);
 router.patch(
   "/:id",
   protect,
-  upload.single("image"),
+  upload.single(IMAGE_UPLOAD_FIELD_NAME),
   validateRequest(createPasswordSchema),
   editPassword
 );
@@ -49,6 +53,11 @@ router.post(
   generatePassword
 );
 router.delete("/:id", protect, deletePasswordsBulk);
-router.get("/export/json", protect, exportPasswordsJson)
+router.post(
+  "/export/json",
+  protect,
+  validateRequest(exportPasswordsSchema),
+  exportPasswordsJson
+);
 
 export default router;

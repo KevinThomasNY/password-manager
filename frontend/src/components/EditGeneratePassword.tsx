@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { usePasswordGeneratorStore } from "@/store/passwordGeneratorStore";
 import { ShieldPlus } from "lucide-react";
+import { SECURITY_POLICY } from "../../../backend/src/constants/security-policy";
 
 const EditGeneratePassword = () => {
   const {
@@ -58,12 +59,16 @@ const EditGeneratePassword = () => {
   };
 
   const handleSave = () => {
-    if (localSettings.length < 5) {
-      setError("Length must be at least 5");
+    if (localSettings.length < SECURITY_POLICY.GENERATED_PASSWORD_MIN_LENGTH) {
+      setError(
+        `Length must be at least ${SECURITY_POLICY.GENERATED_PASSWORD_MIN_LENGTH}`
+      );
       return;
     }
-    if (localSettings.length > 25) {
-      setError("Length cannot exceed 25");
+    if (localSettings.length > SECURITY_POLICY.GENERATED_PASSWORD_MAX_LENGTH) {
+      setError(
+        `Length cannot exceed ${SECURITY_POLICY.GENERATED_PASSWORD_MAX_LENGTH}`
+      );
       return;
     }
     setError(null);
@@ -93,8 +98,8 @@ const EditGeneratePassword = () => {
               name="length"
               value={localSettings.length}
               onChange={handleInputChange}
-              min={5}
-              max={25}
+              min={SECURITY_POLICY.GENERATED_PASSWORD_MIN_LENGTH}
+              max={SECURITY_POLICY.GENERATED_PASSWORD_MAX_LENGTH}
             />
             {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
           </div>

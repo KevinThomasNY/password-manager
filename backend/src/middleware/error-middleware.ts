@@ -2,6 +2,11 @@ import { Request, Response, NextFunction } from "express";
 import { ZodError, ZodSchema } from "zod";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
+import multer from "multer";
+
+enum UploadErrorCode {
+  FileTooLarge = "LIMIT_FILE_SIZE",
+}
 class AppError extends Error {
   public statusCode: number;
 
@@ -59,7 +64,17 @@ function errorMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  if (err instanceof AppError) {
+  if (err instanceof multer.MulterError) {
+    const message =
+      err.code === UploadErrorCode.FileTooLarge
+        ? "Image exceeds the maximum allowed size"
+        : "Invalid image upload";
+    logger.error(`Upload error: ${err.code}`);
+    res.status(StatusCodes.BAD_REQUEST).json({
+      status: "error",
+      message,
+    });
+  } else if (err instanceof AppError) {
     logger.error(`AppError: ${err.message}`, { statusCode: err.statusCode });
     res.status(err.statusCode).json({
       status: "error",

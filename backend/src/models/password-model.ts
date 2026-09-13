@@ -1,11 +1,16 @@
+import crypto from "crypto";
 import { db } from "../db/db-connection";
 import { passwords, securityQuestions } from "../db/schema";
-import { AppError } from "../middleware/error-middleware";
+import { AppError, ValidationError } from "../middleware/error-middleware";
 import { StatusCodes } from "../utils/status-codes";
 import logger from "../utils/logger";
 import { eq, and, sql, count, like } from "drizzle-orm";
 import { currentTimeStamp } from "../utils/helpers";
 import { decrypt } from "../utils/crypto";
+import {
+  PasswordCharacterSet,
+  SECURITY_POLICY,
+} from "../constants/security-policy";
 
 export async function getPasswords(
   user_id: number,
@@ -239,37 +244,33 @@ export function generatePasswordModel(
 ) {
   logger.debug(`Generating password with length: ${length}`);
 
-  const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
-  const numberChars = "0123456789";
-  const symbolChars = "!@#$%^&*()_+-=[]{}|;:,.<>/?";
+  if (
+    length < SECURITY_POLICY.GENERATED_PASSWORD_MIN_LENGTH ||
+    length > SECURITY_POLICY.GENERATED_PASSWORD_MAX_LENGTH
+  ) {
+    throw new ValidationError(
+      `Password length must be between ${SECURITY_POLICY.GENERATED_PASSWORD_MIN_LENGTH} and ${SECURITY_POLICY.GENERATED_PASSWORD_MAX_LENGTH}`
+    );
+  }
 
   let characterPool = "";
-  let requiredChars: string[] = [];
+  const requiredChars: string[] = [];
 
   if (includesUppercase) {
-    characterPool += uppercaseChars;
-    requiredChars.push(
-      uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)]
-    );
+    characterPool += PasswordCharacterSet.Uppercase;
+    requiredChars.push(randomCharacter(PasswordCharacterSet.Uppercase));
   }
   if (includesLowercase) {
-    characterPool += lowercaseChars;
-    requiredChars.push(
-      lowercaseChars[Math.floor(Math.random() * lowercaseChars.length)]
-    );
+    characterPool += PasswordCharacterSet.Lowercase;
+    requiredChars.push(randomCharacter(PasswordCharacterSet.Lowercase));
   }
   if (includesNumbers) {
-    characterPool += numberChars;
-    requiredChars.push(
-      numberChars[Math.floor(Math.random() * numberChars.length)]
-    );
+    characterPool += PasswordCharacterSet.Numbers;
+    requiredChars.push(randomCharacter(PasswordCharacterSet.Numbers));
   }
   if (includesSymbols) {
-    characterPool += symbolChars;
-    requiredChars.push(
-      symbolChars[Math.floor(Math.random() * symbolChars.length)]
-    );
+    characterPool += PasswordCharacterSet.Symbols;
+    requiredChars.push(randomCharacter(PasswordCharacterSet.Symbols));
   }
 
   if (characterPool.length === 0) {
@@ -283,13 +284,30 @@ export function generatePasswordModel(
   let passwordChars: string[] = [...requiredChars];
 
   for (let i = requiredChars.length; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * characterPool.length);
-    passwordChars.push(characterPool[randomIndex]);
+    passwordChars.push(randomCharacter(characterPool));
   }
 
-  passwordChars = passwordChars.sort(() => Math.random() - 0.5);
+  passwordChars = securelyShuffle(passwordChars);
 
   return passwordChars.join("");
+}
+
+function randomCharacter(characters: string): string {
+  return characters[crypto.randomInt(characters.length)];
+}
+
+function securelyShuffle(values: string[]): string[] {
+  const shuffled = [...values];
+
+  for (let currentIndex = shuffled.length - 1; currentIndex > 0; currentIndex--) {
+    const randomIndex = crypto.randomInt(currentIndex + 1);
+    [shuffled[currentIndex], shuffled[randomIndex]] = [
+      shuffled[randomIndex],
+      shuffled[currentIndex],
+    ];
+  }
+
+  return shuffled;
 }
 
 export async function deletePasswordById(passwordId: number) {

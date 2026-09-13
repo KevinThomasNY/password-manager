@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { SECURITY_POLICY } from "../../../backend/src/constants/security-policy";
 
 export interface PasswordGeneratorState {
   length: number;
@@ -20,7 +21,7 @@ export interface PasswordGeneratorState {
 
 export const usePasswordGeneratorStore = create<PasswordGeneratorState>(
   (set) => ({
-    length: 12,
+    length: SECURITY_POLICY.GENERATED_PASSWORD_DEFAULT_LENGTH,
     includeUppercase: true,
     includeLowercase: true,
     includeNumbers: true,

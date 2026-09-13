@@ -5,7 +5,6 @@ dotenv.config();
 
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import path from "path";
 
 import { errorMiddleware } from "./middleware/error-middleware";
 import userRoutes from "./routes/user-routes";
@@ -15,8 +14,6 @@ const app = express();
 
 const frontendOrigin =
   process.env.FRONTEND_ORIGIN || "http://localhost:5173";
-
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(
   cors({
