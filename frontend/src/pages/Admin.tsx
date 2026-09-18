@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowUpRight } from "lucide-react";
 import {
   createManagedInvitation,
   getManagedInvitations,
@@ -109,18 +110,29 @@ export default function Admin() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {ACCOUNT_POLICY.INVITATION_LIFETIME_OPTIONS_HOURS.map((hours) => (
-              <Button
-                key={hours}
-                type="button"
-                variant={invitationLifetime === hours ? "default" : "outline"}
-                onClick={() => setInvitationLifetime(hours)}
-              >
-                {hours} hours
-              </Button>
-            ))}
-            <Button type="button" onClick={createInvitation}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium">Expires after</legend>
+              <div className="inline-flex w-full gap-1 rounded-xl border bg-muted/60 p-1 sm:w-auto">
+                {ACCOUNT_POLICY.INVITATION_LIFETIME_OPTIONS_HOURS.map((hours) => (
+                  <Button
+                    key={hours}
+                    type="button"
+                    variant="ghost"
+                    aria-pressed={invitationLifetime === hours}
+                    className={
+                      invitationLifetime === hours
+                        ? "flex-1 rounded-lg bg-background px-4 text-foreground shadow-sm ring-1 ring-border hover:bg-background sm:flex-none"
+                        : "flex-1 rounded-lg px-4 text-muted-foreground hover:text-foreground sm:flex-none"
+                    }
+                    onClick={() => setInvitationLifetime(hours)}
+                  >
+                    {hours} hours
+                  </Button>
+                ))}
+              </div>
+            </fieldset>
+            <Button type="button" className="w-full sm:w-auto" onClick={createInvitation}>
               Generate link
             </Button>
           </div>
@@ -138,36 +150,52 @@ export default function Admin() {
           <CardTitle>Invitations</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="p-2">Created</th>
-                <th className="p-2">Expires</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(invitationsQuery.data ?? []).map((invitation) => (
-                <tr key={invitation.id} className="border-b">
-                  <td className="p-2">{formatDate(invitation.createdAt)}</td>
-                  <td className="p-2">{formatDate(invitation.expiresAt)}</td>
-                  <td className="p-2 capitalize">{invitation.status}</td>
-                  <td className="p-2">
-                    {invitation.status === InvitationStatus.Active && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => revokeInvitation(invitation.id)}
-                      >
-                        Revoke
-                      </Button>
-                    )}
-                  </td>
+          {invitationsQuery.isLoading ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Loading invitations…
+            </p>
+          ) : (invitationsQuery.data?.length ?? 0) === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="mb-4 rounded-xl bg-muted p-3 text-muted-foreground">
+                <ArrowUpRight aria-hidden="true" className="size-6" />
+              </div>
+              <p className="text-lg font-semibold">No pending invitations</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Generated invitation links will appear here.
+              </p>
+            </div>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="p-2">Created</th>
+                  <th className="p-2">Expires</th>
+                  <th className="p-2">Status</th>
+                  <th className="p-2">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {invitationsQuery.data?.map((invitation) => (
+                  <tr key={invitation.id} className="border-b">
+                    <td className="p-2">{formatDate(invitation.createdAt)}</td>
+                    <td className="p-2">{formatDate(invitation.expiresAt)}</td>
+                    <td className="p-2 capitalize">{invitation.status}</td>
+                    <td className="p-2">
+                      {invitation.status === InvitationStatus.Active && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => revokeInvitation(invitation.id)}
+                        >
+                          Revoke
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </CardContent>
       </Card>
 
