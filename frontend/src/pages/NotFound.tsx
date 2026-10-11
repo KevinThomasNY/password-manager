@@ -1,31 +1,14 @@
-import { lazy, Suspense } from "react";
 import { Home } from "lucide-react";
 import { Link } from "react-router";
 
-import Logo from "@/assets/navbar_icon.svg";
+import LockLogo from "@/components/LockLogo";
 import { Button } from "@/components/ui/button";
-
-const AnimatedLockLogo = lazy(
-  () => import("@/components/AnimatedLockLogo"),
-);
-
-const LogoFallback = () => (
-  <div className="mx-auto flex h-28 w-32 items-center justify-center sm:h-32 sm:w-36">
-    <img
-      src={Logo}
-      alt="Password Manager logo"
-      className="h-16 w-16"
-    />
-  </div>
-);
 
 const NotFound = () => {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md rounded-xl border bg-card p-8 text-center text-card-foreground shadow-sm sm:p-10">
-        <Suspense fallback={<LogoFallback />}>
-          <AnimatedLockLogo />
-        </Suspense>
+        <LockLogo label="Animated Password Manager lock" />
         <p className="mt-2 text-sm font-medium uppercase tracking-widest text-muted-foreground">
           Error 404
         </p>

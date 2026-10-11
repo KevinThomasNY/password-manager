@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/components/hooks/use-toast";
-import Logo from "@/assets/navbar_icon.svg";
+import LockLogo from "@/components/LockLogo";
 import { useQueryClient } from "@tanstack/react-query";
 import { loginUser } from "@/api/user-api";
 
@@ -59,8 +59,8 @@ const LoginForm = () => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 p-6 border rounded-md shadow-md w-full max-w-md mx-auto"
       >
-        <div className="flex items-center justify-center space-x-2 mb-8">
-          <img src={Logo} alt="Login Image" className="w-10 h-10" />
+        <div className="mb-8 flex items-center justify-center gap-2">
+          <LockLogo label="Animated Password Manager lock" size="compact" />
           <h2 className="text-4xl font-semibold">Login</h2>
         </div>
 
