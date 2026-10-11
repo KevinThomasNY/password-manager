@@ -59,7 +59,7 @@ const LoginForm = () => {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 p-6 border rounded-md shadow-md w-full max-w-md mx-auto"
       >
-        <div className="mb-8 flex items-center justify-center gap-2">
+        <div className="mb-8 flex items-center justify-center gap-1">
           <LockLogo label="Animated Password Manager lock" size="compact" />
           <h2 className="text-4xl font-semibold">Login</h2>
         </div>

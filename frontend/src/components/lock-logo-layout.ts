@@ -10,7 +10,7 @@ export const LOCK_LOGO_LAYOUTS: Record<
     canvasGutterClassName: "absolute -inset-y-2 inset-x-0",
   },
   compact: {
-    frameClassName: "relative h-14 w-14 shrink-0 pointer-events-none",
+    frameClassName: "relative h-12 w-12 shrink-0 pointer-events-none",
     canvasGutterClassName: "absolute -inset-y-1 inset-x-0",
   },
 };
